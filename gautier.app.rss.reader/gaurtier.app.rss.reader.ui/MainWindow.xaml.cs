@@ -1,28 +1,33 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace gaurtier.app.rss.reader.ui
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Root layout frame for RSS Reader
     /// </summary>
     public partial class MainWindow : Window
     {
+        private Button _reader_button = null;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            return;
+        }
+
+        private void Window_Initialized(object sender, EventArgs e)
+        {
+            _reader_button = new Button
+            {
+                Content = "reader"
+            };
+
+            root_content.Children.Add(_reader_button);
+
+            return;
         }
     }
 }

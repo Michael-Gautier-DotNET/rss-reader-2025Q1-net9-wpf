@@ -4,3 +4,9 @@
 
 *.suo
 obj/
+/gautier.app.rss.reader/.vs/gautier.app.rss.reader/DesignTimeBuild
+/gautier.app.rss.reader/.vs/gautier.app.rss.reader/FileContentIndex
+/gautier.app.rss.reader/.vs/gautier.app.rss.reader/v17/.futdcache.v1
+/gautier.app.rss.reader/gautier.app.rss.sqlitetosqlserver/bin/Debug
+/gautier.app.rss.reader/gaurtier.app.rss.reader.ui/bin/Debug
+/gautier.app.rss.reader/.vs/ProjectEvaluation

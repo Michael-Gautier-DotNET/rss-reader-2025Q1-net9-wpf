@@ -5,8 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:gaurtier.app.rss.reader.ui"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+        Title="Gautier RSS" 
+        Height="450" 
+        Width="800" 
+        SizeToContent="Manual"
+         Initialized="Window_Initialized">
+    <StackPanel 
+        Name="root_content"
+        x:FieldModifier="internal"
+        Orientation="Vertical" />
 </Window>
