@@ -21,8 +21,10 @@ namespace gautier.app.rss.reader.ui
 
         private TextBlock _reader_feed_name = new TextBlock();
         private TextBlock _reader_headline = new TextBlock();
-        private TextBlock _reader_article = new TextBlock();
+        private WebBrowser _reader_article = new WebBrowser();
         private feed_article _article = null;
+
+        private const string _empty_article = @"<html><head><title>test</title></head><body><div>&nbsp;</div></body></html>";
 
         private SortedList<string, feed> _feeds = null;
         private SortedList<string, SortedList<string, feed_article>> _feeds_articles = null;
@@ -116,8 +118,10 @@ namespace gautier.app.rss.reader.ui
         {
             _article = article;
 
+            var article_text = article?.article_text ?? _empty_article;
+
             _reader_headline.Text = article?.headline_text ?? string.Empty;
-            _reader_article.Text = article?.article_text ?? string.Empty;
+            _reader_article.NavigateToString(article_text);
 
             return;
         }
