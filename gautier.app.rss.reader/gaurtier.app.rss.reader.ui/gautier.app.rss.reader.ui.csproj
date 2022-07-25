@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{AD2119BD-4AE4-4D2C-9722-E5715DB59097}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>gaurtier.app.rss.reader.ui</RootNamespace>
-    <AssemblyName>gaurtier.app.rss.reader.ui</AssemblyName>
+    <RootNamespace>gautier.app.rss.reader.ui</RootNamespace>
+    <AssemblyName>gautier.app.rss.reader.ui</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -63,6 +63,9 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="feed.cs" />
+    <Compile Include="feed_article.cs" />
+    <Compile Include="feed_data_exchange.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
