@@ -22,10 +22,11 @@ namespace gautier.app.rss.reader.ui
         private TextBlock _reader_feed_name = new TextBlock();
         private TextBlock _reader_headline = new TextBlock();
         private TextBlock _reader_article = new TextBlock();
-        private string _article_url = string.Empty;
+        private feed_article _article = null;
 
         private SortedList<string, feed> _feeds = null;
         private SortedList<string, SortedList<string, feed_article>> _feeds_articles = null;
+        private int _feed_index = -1;
 
         public MainWindow()
         {
@@ -65,6 +66,8 @@ namespace gautier.app.rss.reader.ui
 
                 _reader_tab_items.Add(reader_tab);
                 _reader_tabs.Items.Add(reader_tab);
+
+                (reader_tab.Content as ListBox).SelectionChanged += Headline_SelectionChanged;
             }
 
             root_content.Children.Add(_reader_tabs);
@@ -77,21 +80,59 @@ namespace gautier.app.rss.reader.ui
             return;
         }
 
+
+        private bool feed_index_valid
+        {
+            get
+            {
+                return _feed_index > -1 && _feed_index < _reader_tab_items.Count;
+            }
+        }
+
+        private TabItem reader_tab
+        {
+            get
+            {
+                return feed_index_valid ? _reader_tab_items[_feed_index] : null;
+            }
+        }
+
+        private ListBox feed_headlines
+        {
+            get
+            {
+                return reader_tab.Content as ListBox;
+            }
+        }
+
+        private void Headline_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            apply_article(feed_headlines.SelectedItem as feed_article);
+
+            return;
+        }
+
+        private void apply_article(feed_article article)
+        {
+            _article = article;
+
+            _reader_headline.Text = article?.headline_text ?? string.Empty;
+            _reader_article.Text = article?.article_text ?? string.Empty;
+
+            return;
+        }
+
         private void _reader_tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var feed_index = _reader_tabs.SelectedIndex;
+            _feed_index = _reader_tabs.SelectedIndex;
 
-            if(feed_index > -1 && feed_index < _reader_tab_items.Count)
+            if (feed_index_valid)
             {
-                var reader_tab_item = _reader_tab_items[feed_index];
+                var feed_name = _reader_feed_name.Text = $"{reader_tab.Header}";
 
-                var feed_name = _reader_feed_name.Text = $"{reader_tab_item.Header}";
-
-                if(_feeds_articles.ContainsKey(feed_name))
+                if (_feeds_articles.ContainsKey(feed_name))
                 {
-                    var feed_headlines = reader_tab_item.Content as ListBox;
-
-                    if(feed_headlines != null && feed_headlines.HasItems == false)
+                    if (feed_headlines != null && feed_headlines.HasItems == false)
                     {
                         var indexed_feed_articles = _feeds_articles[feed_name];
 
@@ -100,9 +141,9 @@ namespace gautier.app.rss.reader.ui
                 }
             }
 
+            apply_article(feed_headlines.SelectedItem as feed_article);
+
             return;
         }
-
-
     }
 }
