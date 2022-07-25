@@ -11,8 +11,7 @@
         SizeToContent="Manual"
         WindowState="Maximized"
          Initialized="Window_Initialized">
-    <StackPanel 
+    <Grid 
         Name="root_content"
-        x:FieldModifier="internal"
-        Orientation="Horizontal" />
+        x:FieldModifier="internal" />
 </Window>

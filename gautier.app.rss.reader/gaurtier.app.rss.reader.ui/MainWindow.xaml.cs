@@ -14,9 +14,9 @@ namespace gautier.app.rss.reader.ui
         private TabControl _reader_tabs = null;
         private List<TabItem> _reader_tab_items = new List<TabItem>();
 
-        private StackPanel _reader_feed_detail = new StackPanel
+        private Grid _reader_feed_detail = new Grid
         {
-            Orientation = Orientation.Vertical
+            ShowGridLines = true
         };
 
         private TextBlock _reader_feed_name = new TextBlock();
@@ -75,9 +75,42 @@ namespace gautier.app.rss.reader.ui
             root_content.Children.Add(_reader_tabs);
             root_content.Children.Add(_reader_feed_detail);
 
+            var horizontal_children_count = root_content.Children.Count;
+
+            for (var col_index = 0; col_index < horizontal_children_count; col_index++)
+            {
+                var col_def = new ColumnDefinition
+                {
+                    Width = new GridLength(1, GridUnitType.Star)
+                };
+
+                root_content.ColumnDefinitions.Add(col_def);
+
+                Grid.SetColumn(root_content.Children[col_index], col_index);
+            }
+
             _reader_feed_detail.Children.Add(_reader_feed_name);
             _reader_feed_detail.Children.Add(_reader_headline);
             _reader_feed_detail.Children.Add(_reader_article);
+
+            var vertical_children_count = _reader_feed_detail.Children.Count;
+
+            for (var row_index = 0; row_index < vertical_children_count; row_index++)
+            {
+                var row_def = new RowDefinition
+                {
+                    Height = new GridLength(1, GridUnitType.Auto)
+                };
+
+                if (row_index == 2)
+                {
+                    row_def.Height = new GridLength(4, GridUnitType.Star);
+                }
+
+                _reader_feed_detail.RowDefinitions.Add(row_def);
+
+                Grid.SetRow(_reader_feed_detail.Children[row_index], row_index);
+            }
 
             return;
         }
