@@ -24,6 +24,9 @@ namespace gautier.app.rss.reader.ui
         private TextBlock _reader_article = new TextBlock();
         private string _article_url = string.Empty;
 
+        private SortedList<string, feed> _feeds = null;
+        private SortedList<string, SortedList<string, feed_article>> _feeds_articles = null;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -43,15 +46,21 @@ namespace gautier.app.rss.reader.ui
 
             _reader_tabs.SelectionChanged += _reader_tabs_SelectionChanged;
 
-            var feeds = feed_data_exchange.get_all_feeds();
+            _feeds = feed_data_exchange.get_all_feeds();
+            _feeds_articles = feed_data_exchange.get_all_feed_articles();
 
-            var feed_names = feeds.Keys;
+            var feed_names = _feeds.Keys;
 
             foreach (var feed_name in feed_names)
             {
                 var reader_tab = new TabItem
                 {
-                    Header = feed_name
+                    Header = feed_name,
+                    Content = new ListBox
+                    {
+                        DisplayMemberPath = "headline_text",
+                        SelectedValuePath = "article_url",
+                    }
                 };
 
                 _reader_tab_items.Add(reader_tab);
@@ -76,7 +85,19 @@ namespace gautier.app.rss.reader.ui
             {
                 var reader_tab_item = _reader_tab_items[feed_index];
 
-                _reader_feed_name.Text = $"{reader_tab_item.Header}";
+                var feed_name = _reader_feed_name.Text = $"{reader_tab_item.Header}";
+
+                if(_feeds_articles.ContainsKey(feed_name))
+                {
+                    var feed_headlines = reader_tab_item.Content as ListBox;
+
+                    if(feed_headlines != null && feed_headlines.HasItems == false)
+                    {
+                        var indexed_feed_articles = _feeds_articles[feed_name];
+
+                        feed_headlines.ItemsSource = indexed_feed_articles.Values;
+                    }
+                }
             }
 
             return;
