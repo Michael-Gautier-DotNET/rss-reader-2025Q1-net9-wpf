@@ -87,7 +87,7 @@ namespace gautier.app.rss.reader.ui
 
                             for (var col_index = 0; col_index < col_count; col_index++)
                             {
-                                var col_value = col_reader.GetString(col_index);
+                                var col_value = $"{col_reader.GetValue(col_index)}";
                                 //Assume all is text/string.
                                 switch (col_index)
                                 {
@@ -113,6 +113,11 @@ namespace gautier.app.rss.reader.ui
                                         feed_article_item.row_insert_date_time = col_value;
                                         break;
                                 }
+                            }
+
+                            if (!feeds_articles.ContainsKey(feed_article_item.feed_name))
+                            {
+                                feeds_articles[feed_article_item.feed_name] = new SortedList<string, feed_article>();
                             }
 
                             if (feeds_articles.ContainsKey(feed_article_item.feed_name))
