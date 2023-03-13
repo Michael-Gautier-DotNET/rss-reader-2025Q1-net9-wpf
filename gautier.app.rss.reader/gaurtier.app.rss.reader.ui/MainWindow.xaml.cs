@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -27,6 +28,9 @@ namespace gautier.app.rss.reader.ui
         private SortedList<string, SortedList<string, feed_article>> feeds_articles = null;
         private int feed_index = -1;
 
+        private BackgroundWorker WindowInitializationTask = new();
+        private BackgroundWorker FeedArticlesRetrieveTask = new();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -38,11 +42,51 @@ namespace gautier.app.rss.reader.ui
         {
             InitializeValues();
 
+            WindowInitializationTask.DoWork += WindowInitializationTask_DoWork;
+            WindowInitializationTask.RunWorkerCompleted += WindowInitializationTask_RunWorkerCompleted;
+
+            WindowInitializationTask.RunWorkerAsync();
+
+            FeedArticlesRetrieveTask.DoWork += FeedArticlesRetrieveTask_DoWork;
+            FeedArticlesRetrieveTask.RunWorkerCompleted += FeedArticlesRetrieveTask_RunWorkerCompleted;
+
+            return;
+        }
+
+        private void WindowInitializationTask_DoWork(object sender, DoWorkEventArgs e)
+        {
+            feeds = feed_data_exchange.get_all_feeds();
+
+            return;
+        }
+
+        private void WindowInitializationTask_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
             InitializeFeedConfigurations();
 
             LayoutHeadlinesSection();
 
             LayoutDetailSection();
+
+            FeedArticlesRetrieveTask.RunWorkerAsync();
+
+            return;
+        }
+
+        private void FeedArticlesRetrieveTask_DoWork(object sender, DoWorkEventArgs e)
+        {
+            feeds_articles = feed_data_exchange.get_all_feed_articles();
+
+            feed_index = feeds_articles.Count > -1 ? 0 : -1;
+
+            return;
+        }
+
+        private void FeedArticlesRetrieveTask_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            ApplyFeed();
+
+            reader_tabs.SelectionChanged += ReaderTabs_SelectionChanged;
 
             return;
         }
@@ -81,12 +125,6 @@ namespace gautier.app.rss.reader.ui
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(1)
             };
-
-            reader_tabs.SelectionChanged += ReaderTabs_SelectionChanged;
-
-            feeds = feed_data_exchange.get_all_feeds();
-            feeds_articles = feed_data_exchange.get_all_feed_articles();
-
 
             return;
         }
@@ -160,11 +198,11 @@ namespace gautier.app.rss.reader.ui
             }
         }
 
-        private ListBox FeedHeadlines
+        private ListBox? FeedHeadlines
         {
             get
             {
-                return ReaderTab.Content as ListBox;
+                return ReaderTab?.Content as ListBox;
             }
         }
 
@@ -191,6 +229,13 @@ namespace gautier.app.rss.reader.ui
         {
             feed_index = reader_tabs.SelectedIndex;
 
+            ApplyFeed();
+
+            return;
+        }
+
+        private void ApplyFeed()
+        {
             if (IsFeedIndexValid)
             {
                 var feed_name = reader_feed_name.Text = $"{ReaderTab.Header}";
@@ -206,7 +251,7 @@ namespace gautier.app.rss.reader.ui
                 }
             }
 
-            ApplyArticle(FeedHeadlines.SelectedItem as feed_article);
+            ApplyArticle(FeedHeadlines?.SelectedItem as feed_article);
 
             return;
         }
