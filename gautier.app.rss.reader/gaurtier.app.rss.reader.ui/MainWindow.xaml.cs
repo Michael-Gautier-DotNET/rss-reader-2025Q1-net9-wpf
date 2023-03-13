@@ -11,24 +11,21 @@ namespace gautier.app.rss.reader.ui
     /// </summary>
     public partial class MainWindow : Window
     {
-        private TabControl _reader_tabs = null;
-        private List<TabItem> _reader_tab_items = new List<TabItem>();
+        private TabControl reader_tabs = null;
+        private List<TabItem> reader_tab_items = new();
 
-        private Grid _reader_feed_detail = new Grid
-        {
-            ShowGridLines = true
-        };
+        private Grid reader_feed_detail = new();
 
-        private TextBlock _reader_feed_name = new TextBlock();
-        private TextBlock _reader_headline = new TextBlock();
-        private WebBrowser _reader_article = new WebBrowser();
-        private feed_article _article = null;
+        private TextBlock reader_feed_name = new();
+        private TextBlock reader_headline = new();
+        private WebBrowser reader_article = new();
+        private feed_article article = null;
 
-        private const string _empty_article = @"<html><head><title>test</title></head><body><div>&nbsp;</div></body></html>";
+        private readonly string empty_article = @"<html><head><title>test</title></head><body><div>&nbsp;</div></body></html>";
 
-        private SortedList<string, feed> _feeds = null;
-        private SortedList<string, SortedList<string, feed_article>> _feeds_articles = null;
-        private int _feed_index = -1;
+        private SortedList<string, feed> feeds = null;
+        private SortedList<string, SortedList<string, feed_article>> feeds_articles = null;
+        private int feed_index = -1;
 
         public MainWindow()
         {
@@ -39,20 +36,20 @@ namespace gautier.app.rss.reader.ui
 
         private void Window_Initialized(object sender, EventArgs e)
         {
-            _reader_tabs = new TabControl
-            {
-                Background = Brushes.Orange,
-                BorderBrush = Brushes.Beige,
-                BorderThickness = new Thickness(1),
-                Padding = new Thickness(1)
-            };
+            InitializeValues();
 
-            _reader_tabs.SelectionChanged += _reader_tabs_SelectionChanged;
+            InitializeFeedConfigurations();
 
-            _feeds = feed_data_exchange.get_all_feeds();
-            _feeds_articles = feed_data_exchange.get_all_feed_articles();
+            LayoutHeadlinesSection();
 
-            var feed_names = _feeds.Keys;
+            LayoutDetailSection();
+
+            return;
+        }
+
+        private void InitializeFeedConfigurations()
+        {
+            var feed_names = feeds.Keys;
 
             foreach (var feed_name in feed_names)
             {
@@ -66,14 +63,69 @@ namespace gautier.app.rss.reader.ui
                     }
                 };
 
-                _reader_tab_items.Add(reader_tab);
-                _reader_tabs.Items.Add(reader_tab);
+                reader_tab_items.Add(reader_tab);
+                reader_tabs.Items.Add(reader_tab);
 
                 (reader_tab.Content as ListBox).SelectionChanged += Headline_SelectionChanged;
             }
 
-            root_content.Children.Add(_reader_tabs);
-            root_content.Children.Add(_reader_feed_detail);
+            return;
+        }
+
+        private void InitializeValues()
+        {
+            reader_tabs = new TabControl
+            {
+                Background = Brushes.Orange,
+                BorderBrush = Brushes.Beige,
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(1)
+            };
+
+            reader_tabs.SelectionChanged += ReaderTabs_SelectionChanged;
+
+            feeds = feed_data_exchange.get_all_feeds();
+            feeds_articles = feed_data_exchange.get_all_feed_articles();
+
+
+            return;
+        }
+
+        private void LayoutDetailSection()
+        {
+            foreach (var ch in new UIElement[] { reader_feed_name, reader_headline, reader_article })
+            {
+                reader_feed_detail.Children.Add(ch);
+            }
+
+            var vertical_children_count = reader_feed_detail.Children.Count;
+
+            for (var row_index = 0; row_index < vertical_children_count; row_index++)
+            {
+                var row_def = new RowDefinition
+                {
+                    Height = new GridLength(1, GridUnitType.Auto)
+                };
+
+                if (row_index == 2)
+                {
+                    row_def.Height = new GridLength(4, GridUnitType.Star);
+                }
+
+                reader_feed_detail.RowDefinitions.Add(row_def);
+
+                Grid.SetRow(reader_feed_detail.Children[row_index], row_index);
+            }
+
+            return;
+        }
+
+        private void LayoutHeadlinesSection()
+        {
+            foreach (var ch in new UIElement[] { reader_tabs, reader_feed_detail })
+            {
+                root_content.Children.Add(ch);
+            }
 
             var horizontal_children_count = root_content.Children.Count;
 
@@ -89,96 +141,72 @@ namespace gautier.app.rss.reader.ui
                 Grid.SetColumn(root_content.Children[col_index], col_index);
             }
 
-            _reader_feed_detail.Children.Add(_reader_feed_name);
-            _reader_feed_detail.Children.Add(_reader_headline);
-            _reader_feed_detail.Children.Add(_reader_article);
-
-            var vertical_children_count = _reader_feed_detail.Children.Count;
-
-            for (var row_index = 0; row_index < vertical_children_count; row_index++)
-            {
-                var row_def = new RowDefinition
-                {
-                    Height = new GridLength(1, GridUnitType.Auto)
-                };
-
-                if (row_index == 2)
-                {
-                    row_def.Height = new GridLength(4, GridUnitType.Star);
-                }
-
-                _reader_feed_detail.RowDefinitions.Add(row_def);
-
-                Grid.SetRow(_reader_feed_detail.Children[row_index], row_index);
-            }
-
             return;
         }
 
-
-        private bool feed_index_valid
+        private bool IsFeedIndexValid
         {
             get
             {
-                return _feed_index > -1 && _feed_index < _reader_tab_items.Count;
+                return feed_index > -1 && feed_index < reader_tab_items.Count;
             }
         }
 
-        private TabItem reader_tab
+        private TabItem ReaderTab
         {
             get
             {
-                return feed_index_valid ? _reader_tab_items[_feed_index] : null;
+                return IsFeedIndexValid ? reader_tab_items[feed_index] : null;
             }
         }
 
-        private ListBox feed_headlines
+        private ListBox FeedHeadlines
         {
             get
             {
-                return reader_tab.Content as ListBox;
+                return ReaderTab.Content as ListBox;
             }
         }
 
         private void Headline_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            apply_article(feed_headlines.SelectedItem as feed_article);
+            ApplyArticle(FeedHeadlines.SelectedItem as feed_article);
 
             return;
         }
 
-        private void apply_article(feed_article article)
+        private void ApplyArticle(feed_article article)
         {
-            _article = article;
+            this.article = article;
 
-            var article_text = article?.article_text ?? _empty_article;
+            var article_text = article?.article_text ?? empty_article;
 
-            _reader_headline.Text = article?.headline_text ?? string.Empty;
-            _reader_article.NavigateToString(article_text);
+            reader_headline.Text = article?.headline_text ?? string.Empty;
+            reader_article.NavigateToString(article_text);
 
             return;
         }
 
-        private void _reader_tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ReaderTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            _feed_index = _reader_tabs.SelectedIndex;
+            feed_index = reader_tabs.SelectedIndex;
 
-            if (feed_index_valid)
+            if (IsFeedIndexValid)
             {
-                var feed_name = _reader_feed_name.Text = $"{reader_tab.Header}";
+                var feed_name = reader_feed_name.Text = $"{ReaderTab.Header}";
 
-                if (_feeds_articles.ContainsKey(feed_name))
+                if (feeds_articles.ContainsKey(feed_name))
                 {
-                    if (feed_headlines != null && feed_headlines.HasItems == false)
+                    if (FeedHeadlines != null && FeedHeadlines.HasItems == false)
                     {
-                        var indexed_feed_articles = _feeds_articles[feed_name];
+                        var indexed_feed_articles = feeds_articles[feed_name];
 
-                        feed_headlines.ItemsSource = indexed_feed_articles.Values;
+                        FeedHeadlines.ItemsSource = indexed_feed_articles.Values;
                     }
                 }
             }
 
-            apply_article(feed_headlines.SelectedItem as feed_article);
+            ApplyArticle(FeedHeadlines.SelectedItem as feed_article);
 
             return;
         }
