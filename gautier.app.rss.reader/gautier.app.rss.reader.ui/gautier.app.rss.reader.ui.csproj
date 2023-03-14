@@ -9,8 +9,9 @@
   <PropertyGroup>
     <StartupObject>gautier.app.rss.reader.ui.App</StartupObject>
     <ErrorReport>none</ErrorReport>
-    <AnalysisLevel>none</AnalysisLevel>
+    <AnalysisLevel>latest</AnalysisLevel>
     <Nullable>annotations</Nullable>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <WarningLevel>9999</WarningLevel>

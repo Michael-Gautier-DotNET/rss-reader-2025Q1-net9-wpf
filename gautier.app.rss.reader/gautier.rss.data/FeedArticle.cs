@@ -1,18 +1,12 @@
-﻿namespace gautier.rss.data
-{
-    public record FeedArticle
-    {
-        public string feed_name { get; set; } = string.Empty;
-        public string headline_text { get; set; } = string.Empty;
-        public string article_summary { get; set; } = string.Empty;
-        public string article_text { get; set; } = string.Empty;
-        public string article_date { get; set; } = string.Empty;
-        public string article_url { get; set; } = string.Empty;
-        public string row_insert_date_time { get; set; } = string.Empty;
+﻿using System.Diagnostics;
 
-        public override string ToString()
-        {
-            return $"{headline_text} {article_url} {article_date}";
-        }
+namespace gautier.rss.data;
+
+[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
+public readonly record struct FeedArticle(string FeedName, string HeadlineText, string ArticleSummary, string ArticleText, string ArticleDate, string ArticleUrl, string RowInsertDateTime)
+{
+    private string GetDebuggerDisplay()
+    {
+        return $"{FeedName} {HeadlineText} {ArticleUrl}";
     }
 }

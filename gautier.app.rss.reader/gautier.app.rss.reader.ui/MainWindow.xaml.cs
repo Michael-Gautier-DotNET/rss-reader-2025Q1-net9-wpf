@@ -14,7 +14,14 @@ namespace gautier.app.rss.reader.ui
     /// </summary>
     public partial class MainWindow : Window
     {
-        private TabControl reader_tabs = null;
+        private TabControl reader_tabs = new()
+        {
+            Background = Brushes.Orange,
+            BorderBrush = Brushes.Beige,
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(1)
+        };
+
         private List<TabItem> reader_tab_items = new();
 
         private Grid reader_feed_detail = new();
@@ -22,16 +29,15 @@ namespace gautier.app.rss.reader.ui
         private TextBlock reader_feed_name = new();
         private TextBlock reader_headline = new();
         private WebBrowser reader_article = new();
-        private FeedArticle article = null;
+        private FeedArticle? article = new();
 
-        private readonly string empty_article = @"<html><head><title>test</title></head><body><div>&nbsp;</div></body></html>";
+        private static readonly string empty_article = @"<html><head><title>test</title></head><body><div>&nbsp;</div></body></html>";
 
         private SortedList<string, Feed> feeds = null;
-        private SortedList<string, SortedList<string, FeedArticle>> feeds_articles = null;
+        private SortedList<string, FeedArticle> feeds_articles = null;
         private int feed_index = -1;
 
         private BackgroundWorker WindowInitializationTask = new();
-        private BackgroundWorker FeedArticlesRetrieveTask = new();
 
         public MainWindow()
         {
@@ -42,22 +48,19 @@ namespace gautier.app.rss.reader.ui
 
         private void Window_Initialized(object sender, EventArgs e)
         {
-            InitializeValues();
-
             WindowInitializationTask.DoWork += WindowInitializationTask_DoWork;
             WindowInitializationTask.RunWorkerCompleted += WindowInitializationTask_RunWorkerCompleted;
 
             WindowInitializationTask.RunWorkerAsync();
-
-            FeedArticlesRetrieveTask.DoWork += FeedArticlesRetrieveTask_DoWork;
-            FeedArticlesRetrieveTask.RunWorkerCompleted += FeedArticlesRetrieveTask_RunWorkerCompleted;
 
             return;
         }
 
         private void WindowInitializationTask_DoWork(object sender, DoWorkEventArgs e)
         {
-            feeds = feed_data_exchange.get_all_feeds(Properties.Settings.Default.rss_connection_string_sqlserver);
+            feeds = FeedDataExchange.GetAllFeeds(Properties.Settings.Default.rss_connection_string_sqlserver);
+
+            feed_index = feeds.Count > -1 ? 0 : -1;
 
             return;
         }
@@ -70,22 +73,6 @@ namespace gautier.app.rss.reader.ui
 
             LayoutDetailSection();
 
-            FeedArticlesRetrieveTask.RunWorkerAsync();
-
-            return;
-        }
-
-        private void FeedArticlesRetrieveTask_DoWork(object sender, DoWorkEventArgs e)
-        {
-            feeds_articles = feed_data_exchange.get_all_feed_articles(Properties.Settings.Default.rss_connection_string_sqlserver);
-
-            feed_index = feeds_articles.Count > -1 ? 0 : -1;
-
-            return;
-        }
-
-        private void FeedArticlesRetrieveTask_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
             ApplyFeed();
 
             reader_tabs.SelectionChanged += ReaderTabs_SelectionChanged;
@@ -104,8 +91,8 @@ namespace gautier.app.rss.reader.ui
                     Header = feed_name,
                     Content = new ListBox
                     {
-                        DisplayMemberPath = "headline_text",
-                        SelectedValuePath = "article_url",
+                        DisplayMemberPath = "HeadlineText",
+                        SelectedValuePath = "ArticleUrl",
                     }
                 };
 
@@ -114,19 +101,6 @@ namespace gautier.app.rss.reader.ui
 
                 (reader_tab.Content as ListBox).SelectionChanged += Headline_SelectionChanged;
             }
-
-            return;
-        }
-
-        private void InitializeValues()
-        {
-            reader_tabs = new TabControl
-            {
-                Background = Brushes.Orange,
-                BorderBrush = Brushes.Beige,
-                BorderThickness = new Thickness(1),
-                Padding = new Thickness(1)
-            };
 
             return;
         }
@@ -210,18 +184,18 @@ namespace gautier.app.rss.reader.ui
 
         private void Headline_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ApplyArticle(FeedHeadlines.SelectedItem as FeedArticle);
+            ApplyArticle(FeedHeadlines.SelectedItem as FeedArticle?);
 
             return;
         }
 
-        private void ApplyArticle(FeedArticle article)
+        private void ApplyArticle(FeedArticle? article)
         {
             this.article = article;
 
-            var article_text = article?.article_text ?? empty_article;
+            var article_text = article?.ArticleText ?? empty_article;
 
-            reader_headline.Text = article?.headline_text ?? string.Empty;
+            reader_headline.Text = article?.HeadlineText ?? string.Empty;
             reader_article.NavigateToString(article_text);
 
             return;
@@ -242,18 +216,17 @@ namespace gautier.app.rss.reader.ui
             {
                 var feed_name = reader_feed_name.Text = $"{ReaderTab.Header}";
 
-                if (feeds_articles.ContainsKey(feed_name))
+                if (FeedHeadlines != null && FeedHeadlines.HasItems == false)
                 {
-                    if (FeedHeadlines != null && FeedHeadlines.HasItems == false)
-                    {
-                        var indexed_feed_articles = feeds_articles[feed_name];
+                    feeds_articles = FeedDataExchange.GetFeedArticles(Properties.Settings.Default.rss_connection_string_sqlserver, feed_name);
 
-                        FeedHeadlines.ItemsSource = indexed_feed_articles.Values;
-                    }
+                    var indexed_feed_articles = feeds_articles.Values;
+
+                    FeedHeadlines.ItemsSource = indexed_feed_articles;
                 }
             }
 
-            ApplyArticle(FeedHeadlines?.SelectedItem as FeedArticle);
+            ApplyArticle(FeedHeadlines?.SelectedItem as FeedArticle?);
 
             return;
         }

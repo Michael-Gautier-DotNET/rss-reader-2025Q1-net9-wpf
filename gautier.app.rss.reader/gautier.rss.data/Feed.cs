@@ -1,20 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System.Diagnostics;
 
-namespace gautier.rss.data
+namespace gautier.rss.data;
+
+[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
+public readonly record struct Feed(string FeedName, string FeedUrl, string LastRetrieved, string RetrieveLimitHrs, string RetentionDays)
 {
-    public record Feed
+    private string GetDebuggerDisplay()
     {
-        public string feed_name { get; set; } = string.Empty;
-        public string feed_url { get; set; } = string.Empty;
-        public string last_retrieved { get; set; } = string.Empty;
-        public string retrieve_limit_hrs { get; set; } = string.Empty;
-        public string retention_days { get; set; } = string.Empty;
-
-        public SortedList<string, FeedArticle> FeedArticles { get; set; } = new SortedList<string, FeedArticle>();
-
-        public override string ToString()
-        {
-            return $"{feed_name} {feed_url} {last_retrieved} {retrieve_limit_hrs} {retention_days}";
-        }
+        return $"{FeedName} {FeedUrl} {LastRetrieved} {RetrieveLimitHrs} {RetentionDays}";
     }
 }
