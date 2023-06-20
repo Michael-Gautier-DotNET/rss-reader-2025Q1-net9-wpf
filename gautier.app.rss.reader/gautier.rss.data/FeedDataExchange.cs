@@ -1,6 +1,6 @@
 ﻿using System.Data;
 
-using Microsoft.Data.SqlClient;
+using System.Data.SQLite;
 
 namespace gautier.rss.data;
 
@@ -10,7 +10,7 @@ public static class FeedDataExchange
     {
         var feeds = new SortedList<string, Feed>();
 
-        using (var sql_conn = new SqlConnection(sqlConnectionString))
+        using (var sql_conn = new SQLiteConnection(sqlConnectionString))
         {
             sql_conn.Open();
 
@@ -73,7 +73,7 @@ public static class FeedDataExchange
     {
         var feeds_articles = new SortedList<string, SortedList<string, FeedArticle>>(100);
 
-        using (var sql_conn = new SqlConnection(sqlConnectionString))
+        using (var sql_conn = new SQLiteConnection(sqlConnectionString))
         {
             sql_conn.Open();
 
@@ -154,7 +154,7 @@ public static class FeedDataExchange
     {
         var feeds_articles = new SortedList<string, FeedArticle>(100);
 
-        using (var sql_conn = new SqlConnection(sqlConnectionString))
+        using (var sql_conn = new SQLiteConnection(sqlConnectionString))
         {
             sql_conn.Open();
 
