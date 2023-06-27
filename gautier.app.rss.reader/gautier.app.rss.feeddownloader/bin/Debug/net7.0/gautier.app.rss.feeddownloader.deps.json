@@ -6,13 +6,12 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v7.0": {
-      "gautier.rss.data/1.0.0": {
+      "gautier.app.rss.feeddownloader/1.0.0": {
         "dependencies": {
-          "System.Data.SQLite.Core": "1.0.118",
-          "System.ServiceModel.Syndication": "7.0.0"
+          "gautier.rss.data": "1.0.0"
         },
         "runtime": {
-          "gautier.rss.data.dll": {}
+          "gautier.app.rss.feeddownloader.dll": {}
         }
       },
       "Stub.System.Data.SQLite.Core.NetStandard/1.0.118": {
@@ -57,11 +56,20 @@
             "fileVersion": "7.0.22.51805"
           }
         }
+      },
+      "gautier.rss.data/1.0.0": {
+        "dependencies": {
+          "System.Data.SQLite.Core": "1.0.118",
+          "System.ServiceModel.Syndication": "7.0.0"
+        },
+        "runtime": {
+          "gautier.rss.data.dll": {}
+        }
       }
     }
   },
   "libraries": {
-    "gautier.rss.data/1.0.0": {
+    "gautier.app.rss.feeddownloader/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
@@ -86,6 +94,11 @@
       "sha512": "sha512-V3q1Jr3KWo+i201/vUUPfg83rjJLhL5+ROh16PtPhaUJRHwoEBoGWtg0r6pFBRPaDqNY6hXvNgHktDj0gvMEpA==",
       "path": "system.servicemodel.syndication/7.0.0",
       "hashPath": "system.servicemodel.syndication.7.0.0.nupkg.sha512"
+    },
+    "gautier.rss.data/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     }
   }
 }
