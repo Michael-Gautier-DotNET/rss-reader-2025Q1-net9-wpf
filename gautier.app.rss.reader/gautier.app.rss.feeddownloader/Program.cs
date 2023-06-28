@@ -24,7 +24,7 @@ namespace gautier.app.rss.feeddownloader
         {
             foreach (var FeedInfo in feedInfos)
             {
-                var FeedFilePath = Path.Combine(_FeedSaveDirectoryPath, $"{FeedInfo.FeedName}.xml");
+                var FeedFilePath = GetFeedFilePath(FeedInfo);
 
                 if (File.Exists(FeedFilePath) == false)
                 {
@@ -33,6 +33,11 @@ namespace gautier.app.rss.feeddownloader
             }
 
             return;
+        }
+
+        private static string GetFeedFilePath(Feed feedInfo)
+        {
+            return Path.Combine(_FeedSaveDirectoryPath, $"{feedInfo.FeedName}.xml");
         }
 
         private static Feed[] GetStaticFeedInfos()
