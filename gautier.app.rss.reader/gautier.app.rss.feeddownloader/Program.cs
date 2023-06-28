@@ -13,6 +13,8 @@ namespace gautier.app.rss.feeddownloader
 
             CreateStaticFeedFiles(_FeedInfos);
 
+            TransformStaticFeedFiles(_FeedInfos);
+
             return;
         }
 
@@ -35,9 +37,30 @@ namespace gautier.app.rss.feeddownloader
             return;
         }
 
+        private static void TransformStaticFeedFiles(Feed[] feedInfos)
+        {
+            foreach (var FeedInfo in feedInfos)
+            {
+                var RSSFeedFilePath = GetFeedFilePath(FeedInfo);
+                var NormalizedFeedFilePath = GetNormalizedFeedFilePath(FeedInfo);
+
+                if (File.Exists(RSSFeedFilePath) == true && File.Exists(NormalizedFeedFilePath) == false)
+                {
+                    //Stub for Feed Transformation to Text
+                }
+            }
+
+            return;
+        }
+
         private static string GetFeedFilePath(Feed feedInfo)
         {
             return Path.Combine(_FeedSaveDirectoryPath, $"{feedInfo.FeedName}.xml");
+        }
+
+        private static string GetNormalizedFeedFilePath(Feed feedInfo)
+        {
+            return Path.Combine(_FeedSaveDirectoryPath, $"{feedInfo.FeedName}.txt");
         }
 
         private static Feed[] GetStaticFeedInfos()
