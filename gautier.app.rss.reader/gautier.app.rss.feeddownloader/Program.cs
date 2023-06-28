@@ -6,23 +6,23 @@ namespace gautier.app.rss.feeddownloader
     internal class Program
     {
         private static readonly string _FeedSaveDirectoryPath = @"C:\RSSFeeds\";
+        private static readonly Feed[] _FeedInfos = GetStaticFeedInfos();
         internal static void Main(string[] args)
         {
             SetupFeedDirectory();
 
-            CreateStaticFeedFiles();
+            CreateStaticFeedFiles(_FeedInfos);
 
             return;
         }
 
+
         /// <summary>
         /// Designed to generate static local files even if they are later accidentally deleted.
         /// </summary>
-        private static void CreateStaticFeedFiles()
+        private static void CreateStaticFeedFiles(Feed[] feedInfos)
         {
-            var FeedInfos = GetStaticFeedInfos();
-
-            foreach (var FeedInfo in FeedInfos)
+            foreach (var FeedInfo in feedInfos)
             {
                 var FeedFilePath = Path.Combine(_FeedSaveDirectoryPath, $"{FeedInfo.FeedName}.xml");
 
