@@ -5,15 +5,21 @@ namespace gautier.app.rss.feeddownloader
 {
     internal class Program
     {
-        static void Main(string[] args)
+        private static readonly string _FeedSaveDirectoryPath = @"C:\RSSFeeds\";
+        internal static void Main(string[] args)
         {
-            string feedSaveDirectoryPath = @"C:\RSSFeeds\";
+            SetupFeedDirectory();
 
-            if (Directory.Exists(feedSaveDirectoryPath) == false)
-            {
-                Directory.CreateDirectory(feedSaveDirectoryPath);
-            }
+            CreateStaticFeedFiles();
 
+            return;
+        }
+
+        /// <summary>
+        /// Designed to generate static local files even if they are later accidentally deleted.
+        /// </summary>
+        private static void CreateStaticFeedFiles()
+        {
             List<Feed> FeedInfos = new List<Feed>
             {
                 new Feed{
@@ -36,18 +42,31 @@ namespace gautier.app.rss.feeddownloader
 
             foreach (var FeedInfo in FeedInfos)
             {
-                using (var feedXml = XmlReader.Create(FeedInfo.FeedUrl))
-                {
-                    var FeedFilePath = Path.Combine(feedSaveDirectoryPath, $"{FeedInfo.FeedName}.xml");
+                var FeedFilePath = Path.Combine(_FeedSaveDirectoryPath, $"{FeedInfo.FeedName}.xml");
 
-                    using(var feedXmlWriter = XmlWriter.Create(FeedFilePath))
+                if (File.Exists(FeedFilePath) == false)
+                {
+                    using (var feedXml = XmlReader.Create(FeedInfo.FeedUrl))
                     {
-                        feedXmlWriter.WriteNode(feedXml, true);
+                        using (var feedXmlWriter = XmlWriter.Create(FeedFilePath))
+                        {
+                            feedXmlWriter.WriteNode(feedXml, true);
+                        }
                     }
                 }
             }
 
-            Console.WriteLine("Gautier RSS Reader WPF");
+            return;
+        }
+
+        private static void SetupFeedDirectory()
+        {
+            if (Directory.Exists(_FeedSaveDirectoryPath) == false)
+            {
+                Directory.CreateDirectory(_FeedSaveDirectoryPath);
+            }
+
+            return;
         }
     }
 }
