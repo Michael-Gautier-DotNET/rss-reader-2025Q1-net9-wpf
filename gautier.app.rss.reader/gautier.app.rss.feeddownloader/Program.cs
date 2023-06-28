@@ -46,13 +46,20 @@ namespace gautier.app.rss.feeddownloader
 
                 if (File.Exists(FeedFilePath) == false)
                 {
-                    using (var feedXml = XmlReader.Create(FeedInfo.FeedUrl))
-                    {
-                        using (var feedXmlWriter = XmlWriter.Create(FeedFilePath))
-                        {
-                            feedXmlWriter.WriteNode(feedXml, true);
-                        }
-                    }
+                    CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
+                }
+            }
+
+            return;
+        }
+
+        private static void CreateRSSFeedFile(string feedUrl, string feedFilePath)
+        {
+            using (var feedXml = XmlReader.Create(feedUrl))
+            {
+                using (var feedXmlWriter = XmlWriter.Create(feedFilePath))
+                {
+                    feedXmlWriter.WriteNode(feedXml, true);
                 }
             }
 
