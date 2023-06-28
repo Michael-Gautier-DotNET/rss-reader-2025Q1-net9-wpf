@@ -20,7 +20,24 @@ namespace gautier.app.rss.feeddownloader
         /// </summary>
         private static void CreateStaticFeedFiles()
         {
-            List<Feed> FeedInfos = new List<Feed>
+            var FeedInfos = GetStaticFeedInfos();
+
+            foreach (var FeedInfo in FeedInfos)
+            {
+                var FeedFilePath = Path.Combine(_FeedSaveDirectoryPath, $"{FeedInfo.FeedName}.xml");
+
+                if (File.Exists(FeedFilePath) == false)
+                {
+                    CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
+                }
+            }
+
+            return;
+        }
+
+        private static Feed[] GetStaticFeedInfos()
+        {
+            Feed[] FeedInfos = new Feed[]
             {
                 new Feed{
                     FeedName = "Ars Technica",
@@ -40,17 +57,7 @@ namespace gautier.app.rss.feeddownloader
                 }
             };
 
-            foreach (var FeedInfo in FeedInfos)
-            {
-                var FeedFilePath = Path.Combine(_FeedSaveDirectoryPath, $"{FeedInfo.FeedName}.xml");
-
-                if (File.Exists(FeedFilePath) == false)
-                {
-                    CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
-                }
-            }
-
-            return;
+            return FeedInfos;
         }
 
         private static void CreateRSSFeedFile(string feedUrl, string feedFilePath)
