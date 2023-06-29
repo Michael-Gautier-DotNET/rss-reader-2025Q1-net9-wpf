@@ -40,6 +40,8 @@ namespace gautier.app.rss.feeddownloader
 
         private static void TransformStaticFeedFiles(Feed[] feedInfos)
         {
+            var Feeds = new SortedList<string, List<FeedArticle>>();
+
             foreach (var FeedInfo in feedInfos)
             {
                 var RSSFeedFilePath = GetFeedFilePath(FeedInfo);
@@ -57,6 +59,11 @@ namespace gautier.app.rss.feeddownloader
 
                 if(RSSFeed.Items.Any())
                 {
+                    if(Feeds.ContainsKey(FeedInfo.FeedName) == false)
+                    {
+                        Feeds[FeedInfo.FeedName] = new List<FeedArticle>();
+                    }
+
                     foreach(var RSSItem in RSSFeed.Items)
                     {
                         var FeedItem = new FeedArticle
@@ -69,6 +76,8 @@ namespace gautier.app.rss.feeddownloader
                             ArticleUrl = $"{RSSItem.Links[0].GetAbsoluteUri()}",
                             RowInsertDateTime = DateTime.Now.ToString()
                         };
+
+                        Feeds[FeedInfo.FeedName].Add(FeedItem);
                     }
                 }
             }
@@ -101,11 +110,23 @@ namespace gautier.app.rss.feeddownloader
                 new Feed{
                     FeedName = "Phoronix",
                     FeedUrl = "https://www.phoronix.com/phoronix-rss.php"
-                },
+                }/*,
+                  * 6/29/2023
+                  * File format for this feed is not readable through the Syndication API
+                  *    at the moment.
+                  *    Generates the following result:
+                  *    System.Xml.XmlException
+                          HResult=0x80131940
+                          Message=The element with name 'RDF' and namespace 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' is not an allowed feed format.
+                          Source=System.ServiceModel.Syndication
+                  *     ------------------------------------------
+                  *     Will come back to this file later. Commenting it out so as to move forward with 
+                  *     the overall API and implementation build out.
+
                 new Feed{
                     FeedName = "DistroWatch",
                     FeedUrl = "https://distrowatch.com/news/dw.xml"
-                }
+                }*/
             };
 
             return FeedInfos;
