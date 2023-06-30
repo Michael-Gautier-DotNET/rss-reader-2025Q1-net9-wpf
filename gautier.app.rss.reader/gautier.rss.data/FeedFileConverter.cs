@@ -2,6 +2,8 @@
 using System.Text;
 using System.Xml;
 
+using gautier.rss.data.RDFConversion;
+
 namespace gautier.rss.data
 {
     public static class FeedFileConverter
@@ -185,7 +187,13 @@ namespace gautier.rss.data
 
                     if (ExceptionContainsRDF && ExceptionContainsInvalidFormat)
                     {
-                        ////////////////////////////////////////////////  new code goes here
+                        /*
+                        var RDFDoc = RDFConverter.CreateRDF(RSSFeedFilePath);
+
+                        RSSFeed = SyndicationConverter.ConvertToSyndicationFeed(RDFDoc);
+                        */
+
+                        RSSFeed = SyndicationConverter.ConvertToSyndicationFeedUsingArgotic(RSSFeedFilePath);
                     }
                 }
 

@@ -1,4 +1,5 @@
-﻿using System.Xml.Serialization;
+﻿using System.Xml;
+using System.Xml.Serialization;
 
 namespace gautier.rss.data.RDFConversion
 {
@@ -12,7 +13,18 @@ namespace gautier.rss.data.RDFConversion
 
             using (StringReader reader = new StringReader(File.ReadAllText(rdfFilePath)))
             {
-                RdfRDF? rdfRdf = serializer.Deserialize(reader) as RdfRDF;
+                RdfRDF? rdfRdf = new();
+
+                var XMLReaderSetup = new XmlReaderSettings();
+                XMLReaderSetup.CheckCharacters = false;
+                XMLReaderSetup.ValidationType = ValidationType.None;
+                XMLReaderSetup.ConformanceLevel = ConformanceLevel.Fragment;
+                XMLReaderSetup.ValidationFlags = System.Xml.Schema.XmlSchemaValidationFlags.AllowXmlAttributes;
+
+                using (var xmlReader = XmlReader.Create(reader, XMLReaderSetup))
+                {
+                    rdfRdf = serializer.Deserialize(xmlReader) as RdfRDF;
+                }
 
                 if (rdfRdf != null)
                 {
