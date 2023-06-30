@@ -44,38 +44,18 @@ namespace gautier.app.rss.feeddownloader
 
             foreach (var FeedInfo in feedInfos)
             {
-                var RSSFeedFilePath = GetFeedFilePath(FeedInfo);
-                var NormalizedFeedFilePath = GetNormalizedFeedFilePath(FeedInfo);
+                SyndicationFeed RSSFeed = GetSyndicationFeed(FeedInfo);
 
-                SyndicationFeed RSSFeed = new();
-
-                if (File.Exists(RSSFeedFilePath) == true && File.Exists(NormalizedFeedFilePath) == false)
+                if (RSSFeed.Items.Any())
                 {
-                    using(var RSSXmlFile = XmlReader.Create(RSSFeedFilePath))
-                    {
-                        RSSFeed = SyndicationFeed.Load(RSSXmlFile);
-                    }
-                }
-
-                if(RSSFeed.Items.Any())
-                {
-                    if(Feeds.ContainsKey(FeedInfo.FeedName) == false)
+                    if (Feeds.ContainsKey(FeedInfo.FeedName) == false)
                     {
                         Feeds[FeedInfo.FeedName] = new List<FeedArticle>();
                     }
 
-                    foreach(var RSSItem in RSSFeed.Items)
+                    foreach (var RSSItem in RSSFeed.Items)
                     {
-                        var FeedItem = new FeedArticle
-                        {
-                            FeedName = FeedInfo.FeedName,
-                            HeadlineText = RSSItem.Title.Text,
-                            ArticleSummary = RSSItem.Summary.Text,
-                            ArticleText = $"{RSSItem.Content}",
-                            ArticleDate = $"{RSSItem.PublishDate.LocalDateTime}",
-                            ArticleUrl = $"{RSSItem.Links[0].GetAbsoluteUri()}",
-                            RowInsertDateTime = DateTime.Now.ToString()
-                        };
+                        FeedArticle FeedItem = CreateRSSFeedItem(FeedInfo, RSSItem);
 
                         Feeds[FeedInfo.FeedName].Add(FeedItem);
                     }
@@ -83,6 +63,38 @@ namespace gautier.app.rss.feeddownloader
             }
 
             return;
+        }
+
+        private static FeedArticle CreateRSSFeedItem(Feed FeedInfo, SyndicationItem? RSSItem)
+        {
+            return new FeedArticle
+            {
+                FeedName = FeedInfo.FeedName,
+                HeadlineText = RSSItem.Title.Text,
+                ArticleSummary = RSSItem.Summary.Text,
+                ArticleText = $"{RSSItem.Content}",
+                ArticleDate = $"{RSSItem.PublishDate.LocalDateTime}",
+                ArticleUrl = $"{RSSItem.Links[0].GetAbsoluteUri()}",
+                RowInsertDateTime = DateTime.Now.ToString()
+            };
+        }
+
+        private static SyndicationFeed GetSyndicationFeed(Feed FeedInfo)
+        {
+            var RSSFeedFilePath = GetFeedFilePath(FeedInfo);
+            var NormalizedFeedFilePath = GetNormalizedFeedFilePath(FeedInfo);
+
+            SyndicationFeed RSSFeed = new();
+
+            if (File.Exists(RSSFeedFilePath) == true && File.Exists(NormalizedFeedFilePath) == false)
+            {
+                using (var RSSXmlFile = XmlReader.Create(RSSFeedFilePath))
+                {
+                    RSSFeed = SyndicationFeed.Load(RSSXmlFile);
+                }
+            }
+
+            return RSSFeed;
         }
 
         private static string GetFeedFilePath(Feed feedInfo)
