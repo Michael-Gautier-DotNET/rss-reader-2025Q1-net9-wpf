@@ -1,6 +1,8 @@
-﻿using gautier.rss.data;
-using System.ServiceModel.Syndication;
+﻿using System.ServiceModel.Syndication;
+using System.Text;
 using System.Xml;
+
+using gautier.rss.data;
 
 namespace gautier.app.rss.feeddownloader
 {
@@ -40,7 +42,57 @@ namespace gautier.app.rss.feeddownloader
 
         private static void TransformStaticFeedFiles(Feed[] feedInfos)
         {
-            var Feeds = new SortedList<string, List<FeedArticle>>();
+            SortedList<string, List<FeedArticle>> Feeds = TransformMSSyndicationToFeedArticles(feedInfos);
+
+            foreach (var FeedInfo in feedInfos)
+            {
+                if (Feeds.ContainsKey(FeedInfo.FeedName) == false)
+                {
+                    continue;
+                }
+
+                WriteRSSArticlesToFile(FeedInfo, Feeds[FeedInfo.FeedName]);
+            }
+
+            return;
+        }
+
+        private static void WriteRSSArticlesToFile(Feed feedInfo, List<FeedArticle> feedArticles)
+        {
+            var RSSFeedFileOutput = new StringBuilder();
+            var NormalizedFeedFilePath = GetNormalizedFeedFilePath(feedInfo);
+
+            using (var RSSFeedFile = new StreamWriter(NormalizedFeedFilePath, false))
+            {
+                foreach (var Article in feedArticles)
+                {
+                    var HeadlineText = Article.HeadlineText;
+                    var ArticleSummary = Article.ArticleSummary;
+                    var ArticleText = Article.ArticleText;
+                    var ArticleDate = Article.ArticleDate;
+                    var ArticleUrl = Article.ArticleUrl;
+
+                    RSSFeedFileOutput.AppendLine($"URL  {ArticleUrl}");
+                    RSSFeedFileOutput.AppendLine($"DATE {ArticleDate}");
+                    RSSFeedFileOutput.AppendLine($"HEAD {HeadlineText}");
+                    RSSFeedFileOutput.AppendLine($"TEXT {ArticleText}");
+                    RSSFeedFileOutput.AppendLine($"SUM  {ArticleSummary}");
+                }
+
+                RSSFeedFile.Write(RSSFeedFileOutput.ToString());
+
+                RSSFeedFile.Flush();
+                RSSFeedFile.Close();
+            }
+
+            RSSFeedFileOutput.Clear();
+
+            return;
+        }
+
+        private static SortedList<string, List<FeedArticle>> TransformMSSyndicationToFeedArticles(Feed[] feedInfos)
+        {
+            var FeedArticles = new SortedList<string, List<FeedArticle>>();
 
             foreach (var FeedInfo in feedInfos)
             {
@@ -48,33 +100,81 @@ namespace gautier.app.rss.feeddownloader
 
                 if (RSSFeed.Items.Any())
                 {
-                    if (Feeds.ContainsKey(FeedInfo.FeedName) == false)
+                    if (FeedArticles.ContainsKey(FeedInfo.FeedName) == false)
                     {
-                        Feeds[FeedInfo.FeedName] = new List<FeedArticle>();
+                        FeedArticles[FeedInfo.FeedName] = new List<FeedArticle>();
                     }
+
+                    var Articles = FeedArticles[FeedInfo.FeedName];
 
                     foreach (var RSSItem in RSSFeed.Items)
                     {
-                        FeedArticle FeedItem = CreateRSSFeedItem(FeedInfo, RSSItem);
+                        FeedArticle FeedItem = CreateRSSFeedArticle(FeedInfo, RSSItem);
 
-                        Feeds[FeedInfo.FeedName].Add(FeedItem);
+                        Articles.Add(FeedItem);
                     }
                 }
             }
 
-            return;
+            return FeedArticles;
         }
 
-        private static FeedArticle CreateRSSFeedItem(Feed FeedInfo, SyndicationItem? RSSItem)
+        private static FeedArticle CreateRSSFeedArticle(Feed feed, SyndicationItem syndicate)
         {
+            string ArticleText = string.Empty;
+            string ContentType = $"{syndicate.Content?.Type}";
+
+            switch (ContentType)
+            {
+                case "TextSyndicationContent":
+                    {
+                        var Content = syndicate.Content as TextSyndicationContent;
+
+                        ArticleText = Content?.Text ?? string.Empty;
+                    }
+                    break;
+                case "UrlSyndicationContent":
+                    {
+                        var Content = syndicate.Content as UrlSyndicationContent;
+
+                        ArticleText = Content?.Url.AbsoluteUri ?? string.Empty;
+                    }
+                    break;
+                case "XmlSyndicationContent":
+                    {
+                        var Content = syndicate.Content as XmlSyndicationContent;
+
+                        ArticleText = Content?.ToString() ?? string.Empty;
+                    }
+                    break;
+            }
+
+            string ArticleUrl = string.Empty;
+
+            foreach (var Url in syndicate.Links)
+            {
+                ArticleUrl = $"{Url.GetAbsoluteUri()}";
+
+                break;
+            }
+
+            DateTime ArticleDate = syndicate.PublishDate.LocalDateTime;
+
+            if(ArticleDate.Year < 0002)
+            {
+                ArticleDate = syndicate.LastUpdatedTime.LocalDateTime;
+            }
+
+            string ArticleDateText = ArticleDate.ToString("MM/dd/yyyy hh:mm tt");
+
             return new FeedArticle
             {
-                FeedName = FeedInfo.FeedName,
-                HeadlineText = RSSItem.Title.Text,
-                ArticleSummary = RSSItem.Summary.Text,
-                ArticleText = $"{RSSItem.Content}",
-                ArticleDate = $"{RSSItem.PublishDate.LocalDateTime}",
-                ArticleUrl = $"{RSSItem.Links[0].GetAbsoluteUri()}",
+                FeedName = feed.FeedName,
+                HeadlineText = syndicate.Title.Text,
+                ArticleSummary = syndicate.Summary.Text,
+                ArticleText = ArticleText,
+                ArticleDate = ArticleDateText,
+                ArticleUrl = ArticleUrl,
                 RowInsertDateTime = DateTime.Now.ToString()
             };
         }
@@ -82,11 +182,10 @@ namespace gautier.app.rss.feeddownloader
         private static SyndicationFeed GetSyndicationFeed(Feed FeedInfo)
         {
             var RSSFeedFilePath = GetFeedFilePath(FeedInfo);
-            var NormalizedFeedFilePath = GetNormalizedFeedFilePath(FeedInfo);
 
             SyndicationFeed RSSFeed = new();
 
-            if (File.Exists(RSSFeedFilePath) == true && File.Exists(NormalizedFeedFilePath) == false)
+            if (File.Exists(RSSFeedFilePath) == true)
             {
                 using (var RSSXmlFile = XmlReader.Create(RSSFeedFilePath))
                 {
