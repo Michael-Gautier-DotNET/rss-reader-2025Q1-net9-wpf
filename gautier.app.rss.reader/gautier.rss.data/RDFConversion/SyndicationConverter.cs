@@ -1,7 +1,5 @@
 ﻿using System.ServiceModel.Syndication;
 
-using Argotic.Syndication;
-
 namespace gautier.rss.data.RDFConversion
 {
     public static class SyndicationConverter
