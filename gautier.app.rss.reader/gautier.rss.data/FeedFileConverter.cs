@@ -187,13 +187,9 @@ namespace gautier.rss.data
 
                     if (ExceptionContainsRDF && ExceptionContainsInvalidFormat)
                     {
-                        /*
                         var RDFDoc = RDFConverter.CreateRDF(RSSFeedFilePath);
 
                         RSSFeed = SyndicationConverter.ConvertToSyndicationFeed(RDFDoc);
-                        */
-
-                        RSSFeed = SyndicationConverter.ConvertToSyndicationFeedUsingArgotic(RSSFeedFilePath);
                     }
                 }
 

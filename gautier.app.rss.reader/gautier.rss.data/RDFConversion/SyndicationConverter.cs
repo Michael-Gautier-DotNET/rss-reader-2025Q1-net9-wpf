@@ -6,35 +6,6 @@ namespace gautier.rss.data.RDFConversion
 {
     public static class SyndicationConverter
     {
-        public static SyndicationFeed ConvertToSyndicationFeedUsingArgotic(string rdfFilePath)
-        {
-            var feed = new SyndicationFeed();
-
-            var FileUri = new Uri(rdfFilePath);
-
-            var ArgoticFeedItem = RssFeed.Create(new Uri(FileUri.AbsoluteUri));
-
-            // Set feed items
-            foreach (var item in ArgoticFeedItem.Channel.Items)
-            {
-                var feedItem = new SyndicationItem();
-                feedItem.Title = new TextSyndicationContent(item.Title);
-                feedItem.Links.Add(new SyndicationLink(item.Link));
-                feedItem.Summary = new TextSyndicationContent(item.Description);
-                feedItem.PublishDate = item.PublicationDate;
-
-                // Set item categories
-                foreach (var category in item.Categories)
-                {
-                    feedItem.Categories.Add(new SyndicationCategory(category.Value));
-                }
-
-                feed.Items.Append(feedItem);
-            }
-
-            return feed;
-        }
-
         public static SyndicationFeed ConvertToSyndicationFeed(RdfRDF rdfRdf)
         {
             var feed = new SyndicationFeed();

@@ -16,10 +16,11 @@ namespace gautier.rss.data.RDFConversion
                 RdfRDF? rdfRdf = new();
 
                 var XMLReaderSetup = new XmlReaderSettings();
-                XMLReaderSetup.CheckCharacters = false;
+                XMLReaderSetup.IgnoreWhitespace = true;
+                XMLReaderSetup.IgnoreComments = true;
+                XMLReaderSetup.IgnoreProcessingInstructions = true;
                 XMLReaderSetup.ValidationType = ValidationType.None;
-                XMLReaderSetup.ConformanceLevel = ConformanceLevel.Fragment;
-                XMLReaderSetup.ValidationFlags = System.Xml.Schema.XmlSchemaValidationFlags.AllowXmlAttributes;
+                XMLReaderSetup.ValidationFlags = System.Xml.Schema.XmlSchemaValidationFlags.None | System.Xml.Schema.XmlSchemaValidationFlags.AllowXmlAttributes;
 
                 using (var xmlReader = XmlReader.Create(reader, XMLReaderSetup))
                 {
