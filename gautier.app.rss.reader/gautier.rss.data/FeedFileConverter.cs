@@ -2,7 +2,7 @@
 using System.Text;
 using System.Xml;
 
-using gautier.rss.data.RDFConversion;
+using gautier.rss.data.RDFConversion2;
 
 namespace gautier.rss.data
 {
@@ -187,9 +187,7 @@ namespace gautier.rss.data
 
                     if (ExceptionContainsRDF && ExceptionContainsInvalidFormat)
                     {
-                        var RDFDoc = RDFConverter.CreateRDF(RSSFeedFilePath);
-
-                        RSSFeed = SyndicationConverter.ConvertToSyndicationFeed(RDFDoc);
+                        RSSFeed = SyndicationConverter.ConvertToSyndicationFeed(RSSFeedFilePath);
                     }
                 }
 
