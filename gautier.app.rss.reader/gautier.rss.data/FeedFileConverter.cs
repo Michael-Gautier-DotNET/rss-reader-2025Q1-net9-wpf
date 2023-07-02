@@ -58,11 +58,11 @@ namespace gautier.rss.data
                     var ArticleDate = Article.ArticleDate;
                     var ArticleUrl = Article.ArticleUrl;
 
-                    RSSFeedFileOutput.AppendLine($"URL  {ArticleUrl}");
-                    RSSFeedFileOutput.AppendLine($"DATE {ArticleDate}");
-                    RSSFeedFileOutput.AppendLine($"HEAD {HeadlineText}");
-                    RSSFeedFileOutput.AppendLine($"TEXT {ArticleText}");
-                    RSSFeedFileOutput.AppendLine($"SUM  {ArticleSummary}");
+                    RSSFeedFileOutput.AppendLine($"URL\t{ArticleUrl}");
+                    RSSFeedFileOutput.AppendLine($"DATE\t{ArticleDate}");
+                    RSSFeedFileOutput.AppendLine($"HEAD\t{HeadlineText}");
+                    RSSFeedFileOutput.AppendLine($"TEXT\t{ArticleText}");
+                    RSSFeedFileOutput.AppendLine($"SUM\t{ArticleSummary}");
                 }
 
                 RSSFeedFile.Write(RSSFeedFileOutput.ToString());
