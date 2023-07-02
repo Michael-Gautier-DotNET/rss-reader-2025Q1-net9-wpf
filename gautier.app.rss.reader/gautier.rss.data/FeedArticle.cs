@@ -3,8 +3,16 @@
 namespace gautier.rss.data;
 
 [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
-public readonly record struct FeedArticle(string FeedName, string HeadlineText, string ArticleSummary, string ArticleText, string ArticleDate, string ArticleUrl, string RowInsertDateTime)
+public class FeedArticle
 {
+    public string FeedName { get; set; } = string.Empty;
+    public string HeadlineText { get; set; } = string.Empty;
+    public string ArticleSummary { get; set; } = string.Empty;
+    public string ArticleText { get; set; } = string.Empty;
+    public string ArticleDate { get; set; } = string.Empty;
+    public string ArticleUrl { get; set; } = string.Empty;
+    public string RowInsertDateTime { get; set; } = string.Empty;
+
     private string GetDebuggerDisplay()
     {
         return $"{FeedName} {HeadlineText} {ArticleUrl}";
