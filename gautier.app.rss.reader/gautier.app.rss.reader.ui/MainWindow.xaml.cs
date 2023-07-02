@@ -184,7 +184,7 @@ namespace gautier.app.rss.reader.ui
 
         private void Headline_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ApplyArticle(FeedHeadlines.SelectedItem as FeedArticle?);
+            ApplyArticle(FeedHeadlines.SelectedItem as FeedArticle);
 
             return;
         }
@@ -226,7 +226,7 @@ namespace gautier.app.rss.reader.ui
                 }
             }
 
-            ApplyArticle(FeedHeadlines?.SelectedItem as FeedArticle?);
+            ApplyArticle(FeedHeadlines?.SelectedItem as FeedArticle);
 
             return;
         }
