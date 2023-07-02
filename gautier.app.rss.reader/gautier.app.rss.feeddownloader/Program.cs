@@ -29,7 +29,7 @@ namespace gautier.app.rss.feeddownloader
 
         public static Feed[] GetStaticFeedInfos()
         {
-            Feed[] FeedInfos = new Feed[]
+            var FeedInfos = new Feed[]
             {
                 new Feed{
                     FeedName = "Ars Technica",
@@ -42,20 +42,8 @@ namespace gautier.app.rss.feeddownloader
                 new Feed{
                     FeedName = "Phoronix",
                     FeedUrl = "https://www.phoronix.com/phoronix-rss.php"
-                },/*
-                  * 6/29/2023
-                  * File format for this feed is not readable through the Syndication API
-                  *    at the moment.
-                  *    Generates the following result:
-                  *    System.Xml.XmlException
-                          HResult=0x80131940
-                          Message=The element with name 'RDF' and namespace 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' is not an allowed feed format.
-                          Source=System.ServiceModel.Syndication
-                  *     ------------------------------------------
-                  *     Will come back to this file later. Commenting it out so as to move forward with 
-                  *     the overall API and implementation build out.
-
-                */new Feed{
+                },
+                new Feed{
                     FeedName = "DistroWatch",
                     FeedUrl = "https://distrowatch.com/news/dw.xml"
                 }
