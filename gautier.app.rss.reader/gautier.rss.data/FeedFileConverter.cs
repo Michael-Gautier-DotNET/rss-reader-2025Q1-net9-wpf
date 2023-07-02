@@ -2,7 +2,7 @@
 using System.Text;
 using System.Xml;
 
-using gautier.rss.data.RDFConversion2;
+using gautier.rss.data.RDFConversionXD;
 
 namespace gautier.rss.data
 {

@@ -1,6 +1,6 @@
 ﻿using System.Xml;
 
-namespace gautier.rss.data.RDFConversion2
+namespace gautier.rss.data.RDFConversionXD
 {
     public class RDFLoader
     {
