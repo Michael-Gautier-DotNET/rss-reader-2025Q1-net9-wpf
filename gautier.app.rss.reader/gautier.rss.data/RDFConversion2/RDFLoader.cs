@@ -6,122 +6,171 @@ namespace gautier.rss.data.RDFConversion2
     {
         public RDFDocument Load(string filePath)
         {
-            RDFDocument rdfDocument = new RDFDocument();
+            var RDFDoc = new RDFDocument();
 
-            XmlDocument document = new XmlDocument();
-            document.Load(filePath);
+            var RDFXmlDoc = new XmlDocument();
+            RDFXmlDoc.Load(filePath);
 
-            if (document.DocumentElement != null)
+            if (RDFXmlDoc.DocumentElement is not null)
             {
-                foreach (XmlNode node in document.DocumentElement.ChildNodes)
+                var RootNode = RDFXmlDoc.DocumentElement;
+
+                foreach (XmlNode XNode in RootNode.ChildNodes)
                 {
-                    switch (node.LocalName)
+                    switch (XNode.LocalName)
                     {
                         case "channel":
                             {
-                                ParseChannel(node, rdfDocument);
+                                var RDFChannel = ParseChannel(XNode);
+
+                                RDFDoc.Channel = RDFChannel;
                             }
                             break;
                         case "item":
                             {
-                                Item item = new Item();
-                                ParseItem(node, item);
-                                rdfDocument.Items.Add(item);
+                                var RDFItem = ParseItem(XNode);
+
+                                RDFDoc.Items.Add(RDFItem);
                             }
                             break;
                     }
                 }
             }
 
-            return rdfDocument;
+            return RDFDoc;
         }
 
-        private void ParseChannel(XmlNode? channelNode, RDFDocument rdfDocument)
+        private Channel ParseChannel(XmlNode? channelNode)
         {
+            Channel RDFChannel = new();
+
             if (channelNode is null)
-                return;
-
-            Channel channel = new Channel();
-
-            foreach (XmlNode node in channelNode.ChildNodes)
             {
-                if (node is XmlElement element)
+                return RDFChannel;
+            }
+
+            foreach (XmlNode ChannelContentNode in channelNode.ChildNodes)
+            {
+                if (ChannelContentNode is XmlElement XElement)
                 {
-                    switch (element.LocalName)
+                    switch (XElement.LocalName)
                     {
                         case "title":
-                            channel.Title = element.InnerText;
+                            {
+                                RDFChannel.Title = XElement.InnerText;
+                            }
                             break;
                         case "link":
-                            channel.Link = element.InnerText;
+                            {
+                                RDFChannel.Link = XElement.InnerText;
+                            }
                             break;
                         case "description":
-                            channel.Description = element.InnerText;
+                            {
+                                RDFChannel.Description = XElement.InnerText;
+                            }
                             break;
                         case "language":
-                            channel.Language = element.InnerText;
+                            {
+                                RDFChannel.Language = XElement.InnerText;
+                            }
                             break;
                         case "rights":
-                            channel.Rights = element.InnerText;
+                            {
+                                RDFChannel.Rights = XElement.InnerText;
+                            }
                             break;
                         case "date":
-                            DateTime.TryParse(element.InnerText, out DateTime dateValue);
-                            channel.Date = dateValue;
+                            {
+                                DateTime.TryParse(XElement.InnerText, out DateTime dateValue);
+                                RDFChannel.Date = dateValue;
+                            }
                             break;
                         case "publisher":
-                            channel.Publisher = element.InnerText;
+                            {
+                                RDFChannel.Publisher = XElement.InnerText;
+                            }
                             break;
                         case "creator":
-                            channel.Creator = element.InnerText;
+                            {
+                                RDFChannel.Creator = XElement.InnerText;
+                            }
                             break;
                         case "subject":
-                            channel.Subject = element.InnerText;
+                            {
+                                RDFChannel.Subject = XElement.InnerText;
+                            }
                             break;
                         case "updatePeriod":
-                            channel.UpdatePeriod = element.InnerText;
+                            {
+                                RDFChannel.UpdatePeriod = XElement.InnerText;
+                            }
                             break;
                         case "updateFrequency":
-                            int.TryParse(element.InnerText, out int updateFrequencyValue);
-                            channel.UpdateFrequency = updateFrequencyValue;
+                            {
+                                int.TryParse(XElement.InnerText, out int updateFrequencyValue);
+                                RDFChannel.UpdateFrequency = updateFrequencyValue;
+                            }
                             break;
                         case "updateBase":
-                            DateTime.TryParse(element.InnerText, out DateTime updateBaseValue);
-                            channel.UpdateBase = updateBaseValue;
+                            {
+                                DateTime.TryParse(XElement.InnerText, out DateTime updateBaseValue);
+                                RDFChannel.UpdateBase = updateBaseValue;
+                            }
                             break;
                     }
                 }
             }
 
-            rdfDocument.Channel = channel;
+            return RDFChannel;
         }
 
-        private void ParseItem(XmlNode itemNode, Item item)
+        private Item ParseItem(XmlNode node)
         {
-            foreach (XmlNode node in itemNode.ChildNodes)
+            Item RDFItem = new();
+
+            if(node is null)
             {
-                if (node is XmlElement element)
+                return RDFItem;
+            }
+
+            foreach (XmlNode ItemContentNode in node.ChildNodes)
+            {
+                if (ItemContentNode is XmlElement XElement)
                 {
-                    switch (element.LocalName)
+                    switch (XElement.LocalName)
                     {
                         case "title":
-                            item.Title = element.InnerText;
+                            {
+                                RDFItem.Title = XElement.InnerText;
+                            }
                             break;
                         case "link":
-                            item.Link = element.InnerText;
+                            {
+                                RDFItem.Link = XElement.InnerText;
+                            }
                             break;
                         case "description":
-                            item.Description = element.InnerText;
+                            {
+                                RDFItem.Description = XElement.InnerText;
+                            }
                             break;
                         case "date":
-                            DateTime.TryParse(element.InnerText, out DateTime dateValue);
-                            item.Date = dateValue;
+                            {
+                                DateTime.TryParse(XElement.InnerText, out DateTime dateValue);
+                                RDFItem.Date = dateValue;
+                            }
                             break;
                         case "section":
-                            item.Section = element.InnerText;
+                            {
+                                RDFItem.Section = XElement.InnerText;
+                            }
                             break;
                     }
                 }
             }
+
+            return RDFItem;
         }
     }
 }
