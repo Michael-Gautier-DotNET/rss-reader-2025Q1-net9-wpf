@@ -57,7 +57,14 @@ public static class FeedDataExchange
 
                         if (!feeds.ContainsKey(FeedName))
                         {
-                            Feed feed_item = new(FeedName, FeedUrl, LastRetrieved, RetrieveLimitHrs, RetentionDays);
+                            Feed feed_item = new Feed
+                            {
+                                FeedName = FeedName,
+                                FeedUrl = FeedUrl,
+                                LastRetrieved = LastRetrieved,
+                                RetrieveLimitHrs = RetrieveLimitHrs,
+                                RetentionDays = RetentionDays
+                            };
 
                             feeds.Add(FeedName, feed_item);
                         }
@@ -137,7 +144,16 @@ public static class FeedDataExchange
 
                             if (!articles.ContainsKey(ArticleUrl))
                             {
-                                FeedArticle feed_article_item = new(FeedName, HeadlineText, ArticleSummary, ArticleText, ArticleDate, ArticleUrl, RowInsertDateTime);
+                                FeedArticle feed_article_item = new FeedArticle
+                                {
+                                    FeedName = FeedName,
+                                    HeadlineText = HeadlineText,
+                                    ArticleSummary = ArticleSummary,
+                                    ArticleText = ArticleText,
+                                    ArticleDate = ArticleDate,
+                                    ArticleUrl = ArticleUrl,
+                                    RowInsertDateTime = RowInsertDateTime
+                                };
 
                                 articles.Add(ArticleUrl, feed_article_item);
                             }
@@ -211,7 +227,16 @@ public static class FeedDataExchange
 
                         if (!feeds_articles.ContainsKey(ArticleUrl))
                         {
-                            FeedArticle feed_article_item = new(FeedName, HeadlineText, ArticleSummary, ArticleText, ArticleDate, ArticleUrl, RowInsertDateTime);
+                            FeedArticle feed_article_item = new FeedArticle
+                            {
+                                FeedName = FeedName,
+                                HeadlineText = HeadlineText,
+                                ArticleSummary = ArticleSummary,
+                                ArticleText = ArticleText,
+                                ArticleDate = ArticleDate,
+                                ArticleUrl = ArticleUrl,
+                                RowInsertDateTime = RowInsertDateTime
+                            };
 
                             feeds_articles.Add(ArticleUrl, feed_article_item);
                         }
@@ -222,4 +247,214 @@ public static class FeedDataExchange
 
         return feeds_articles;
     }
+
+    public static void ImportStaticFeedFilesToDatabase(string feedSaveDirectoryPath, Feed[] feedInfos, string connectionString)
+    {
+        const char Tab = '\t';
+
+        SortedList<string, List<FeedArticleUnion>> feedsArticles = new SortedList<string, List<FeedArticleUnion>>();
+
+        foreach (Feed feedInfo in feedInfos)
+        {
+            string filePath = GetNormalizedFeedFilePath(feedSaveDirectoryPath, feedInfo);
+
+            if (!File.Exists(filePath))
+            {
+                continue;
+            }
+
+            using (StreamReader reader = new StreamReader(filePath))
+            {
+                string line;
+                FeedArticleUnion feedArticleUnion = new();
+                string previousURL = string.Empty;
+
+                Console.WriteLine($"Reading Feed {feedInfo.FeedName}");
+
+                int counter = 0;
+
+                while (reader.EndOfStream == false && (line = reader.ReadLine() ?? string.Empty) is not null)
+                {
+                    counter++;
+
+                    Console.WriteLine($"Reading line {counter}");
+
+                    if (string.IsNullOrWhiteSpace(line))
+                    {
+                        Console.WriteLine("skip empty line");
+
+                        continue;
+                    }
+
+                    string firstColumn = string.Empty;
+                    string secondColumn = string.Empty;
+
+                    if (line.Contains(Tab))
+                    {
+                        firstColumn = line.Substring(0, line.IndexOf(Tab));
+                        secondColumn = line.Substring(line.IndexOf(Tab) + 1);
+                    }
+                    else if (firstColumn == "SUM")
+                    {
+                        feedArticleUnion.ArticleDetail.ArticleSummary += secondColumn;
+                    }
+
+                    if (firstColumn == "URL" && previousURL != secondColumn)
+                    {
+                        feedArticleUnion = new FeedArticleUnion
+                        {
+                            FeedHeader = feedInfo,
+                            ArticleDetail = new FeedArticle()
+                        };
+
+                        if (!feedsArticles.ContainsKey(feedInfo.FeedName))
+                        {
+                            feedsArticles.Add(feedInfo.FeedName, new List<FeedArticleUnion>());
+                        }
+
+                        feedsArticles[feedInfo.FeedName].Add(feedArticleUnion);
+
+                        previousURL = secondColumn;
+                    }
+
+                    CreateFeedArticle(feedArticleUnion, firstColumn, secondColumn);
+                }
+            }
+        }
+
+        WriteRSSArticlesToDatabase(connectionString, feedsArticles);
+
+        return;
+    }
+
+    private static string GetNormalizedFeedFilePath(string feedSaveDirectoryPath, Feed feedInfo)
+    {
+        return Path.Combine(feedSaveDirectoryPath, $"{feedInfo.FeedName}.txt");
+    }
+
+    private static FeedArticleUnion CreateFeedArticle(FeedArticleUnion feedArticle, string firstColumn, string secondColumn)
+    {
+        switch (firstColumn)
+        {
+            case "URL":
+                feedArticle.ArticleDetail.ArticleUrl = secondColumn;
+                break;
+            case "DATE":
+                feedArticle.ArticleDetail.ArticleDate = secondColumn;
+                break;
+            case "HEAD":
+                feedArticle.ArticleDetail.HeadlineText = secondColumn;
+                break;
+            case "TEXT":
+                feedArticle.ArticleDetail.ArticleText = secondColumn;
+                break;
+            case "SUM":
+                feedArticle.ArticleDetail.ArticleSummary = secondColumn;
+                break;
+            default:
+                // Handle unknown firstColumn value
+                break;
+        }
+
+        return feedArticle;
+    }
+
+    public static void WriteRSSArticlesToDatabase(string connectionString, SortedList<string, List<FeedArticleUnion>> feedsArticles)
+    {
+        Console.WriteLine("Write RSS Articles");
+
+        using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+        {
+            Console.WriteLine("Open Connection");
+
+            connection.Open();
+
+            Console.WriteLine("Write to tables");
+
+            foreach (var feedArticlesPair in feedsArticles)
+            {
+                string feedName = feedArticlesPair.Key;
+                List<FeedArticleUnion> articles = feedArticlesPair.Value;
+
+                // Check if feed exists in the feeds table
+                string checkFeedCommandText = "SELECT COUNT(*) FROM feeds WHERE feed_name = @FeedName";
+                using (SQLiteCommand checkFeedCommand = new SQLiteCommand(checkFeedCommandText, connection))
+                {
+                    checkFeedCommand.Parameters.AddWithValue("@FeedName", feedName);
+                    int existingFeedCount = Convert.ToInt32(checkFeedCommand.ExecuteScalar());
+
+                    if (existingFeedCount == 0)
+                    {
+                        // Insert new feed into feeds table
+                        string insertFeedCommandText = "INSERT INTO feeds (feed_name, feed_url) VALUES (@FeedName, @FeedUrl)";
+                        using (SQLiteCommand insertFeedCommand = new SQLiteCommand(insertFeedCommandText, connection))
+                        {
+                            insertFeedCommand.Parameters.AddWithValue("@FeedName", feedName);
+                            insertFeedCommand.Parameters.AddWithValue("@FeedUrl", articles[0].FeedHeader.FeedUrl);
+                            insertFeedCommand.ExecuteNonQuery();
+                        }
+                    }
+                    else
+                    {
+                        // Update last_retrieved column in feeds table
+                        string updateLastRetrievedCommandText = "UPDATE feeds SET last_retrieved = @LastRetrieved WHERE feed_name = @FeedName";
+                        using (SQLiteCommand updateLastRetrievedCommand = new SQLiteCommand(updateLastRetrievedCommandText, connection))
+                        {
+                            updateLastRetrievedCommand.Parameters.AddWithValue("@LastRetrieved", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                            updateLastRetrievedCommand.Parameters.AddWithValue("@FeedName", feedName);
+                            updateLastRetrievedCommand.ExecuteNonQuery();
+                        }
+                    }
+                }
+
+                // Insert or update articles in feeds_articles table
+                foreach (var article in articles)
+                {
+                    string checkArticleCommandText = "SELECT COUNT(*) FROM feeds_articles WHERE feed_name = @FeedName AND article_url = @ArticleUrl";
+                    using (SQLiteCommand checkArticleCommand = new SQLiteCommand(checkArticleCommandText, connection))
+                    {
+                        checkArticleCommand.Parameters.AddWithValue("@FeedName", feedName);
+                        checkArticleCommand.Parameters.AddWithValue("@ArticleUrl", article.ArticleDetail.ArticleUrl);
+                        int existingArticleCount = Convert.ToInt32(checkArticleCommand.ExecuteScalar());
+
+                        if (existingArticleCount == 0)
+                        {
+                            // Insert new article into feeds_articles table
+                            string insertArticleCommandText = "INSERT INTO feeds_articles (feed_name, headline_text, article_summary, article_text, article_date, article_url) " +
+                                "VALUES (@FeedName, @HeadlineText, @ArticleSummary, @ArticleText, @ArticleDate, @ArticleUrl)";
+                            using (SQLiteCommand insertArticleCommand = new SQLiteCommand(insertArticleCommandText, connection))
+                            {
+                                insertArticleCommand.Parameters.AddWithValue("@FeedName", feedName);
+                                insertArticleCommand.Parameters.AddWithValue("@HeadlineText", article.ArticleDetail.HeadlineText);
+                                insertArticleCommand.Parameters.AddWithValue("@ArticleSummary", article.ArticleDetail.ArticleSummary);
+                                insertArticleCommand.Parameters.AddWithValue("@ArticleText", article.ArticleDetail.ArticleText);
+                                insertArticleCommand.Parameters.AddWithValue("@ArticleDate", article.ArticleDetail.ArticleDate);
+                                insertArticleCommand.Parameters.AddWithValue("@ArticleUrl", article.ArticleDetail.ArticleUrl);
+                                insertArticleCommand.ExecuteNonQuery();
+                            }
+                        }
+                        else
+                        {
+                            // Update existing article in feeds_articles table
+                            string updateArticleCommandText = "UPDATE feeds_articles SET headline_text = @HeadlineText, article_summary = @ArticleSummary, " +
+                                "article_text = @ArticleText, article_date = @ArticleDate WHERE feed_name = @FeedName AND article_url = @ArticleUrl";
+                            using (SQLiteCommand updateArticleCommand = new SQLiteCommand(updateArticleCommandText, connection))
+                            {
+                                updateArticleCommand.Parameters.AddWithValue("@HeadlineText", article.ArticleDetail.HeadlineText);
+                                updateArticleCommand.Parameters.AddWithValue("@ArticleSummary", article.ArticleDetail.ArticleSummary);
+                                updateArticleCommand.Parameters.AddWithValue("@ArticleText", article.ArticleDetail.ArticleText);
+                                updateArticleCommand.Parameters.AddWithValue("@ArticleDate", article.ArticleDetail.ArticleDate);
+                                updateArticleCommand.Parameters.AddWithValue("@FeedName", feedName);
+                                updateArticleCommand.Parameters.AddWithValue("@ArticleUrl", article.ArticleDetail.ArticleUrl);
+                                updateArticleCommand.ExecuteNonQuery();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return;
+    }
+
 }
