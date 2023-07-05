@@ -1,12 +1,12 @@
 ﻿using System.Data;
-
 using System.Data.SQLite;
+using System.Text;
 
 namespace gautier.rss.data;
 
 public static class FeedDataExchange
 {
-   private const char _Tab = '\t';
+    private const char _Tab = '\t';
 
     public static SortedList<string, Feed> GetAllFeeds(string sqlConnectionString)
     {
@@ -252,77 +252,77 @@ public static class FeedDataExchange
 
     public static void ImportStaticFeedFilesToDatabase(string feedSaveDirectoryPath, Feed[] feedInfos, string connectionString)
     {
-        SortedList<string, List<FeedArticleUnion>> feedsArticles = new SortedList<string, List<FeedArticleUnion>>();
+        SortedList<string, List<FeedArticleUnion>> FeedsArticles = new();
 
-        foreach (Feed feedInfo in feedInfos)
+        DateTime ModificationDateTime = DateTime.Now;
+        string ModificationDateTimeText = ModificationDateTime.ToString();
+
+        foreach (Feed FeedHeader in feedInfos)
         {
-            string filePath = GetNormalizedFeedFilePath(feedSaveDirectoryPath, feedInfo);
+            FeedHeader.LastRetrieved = ModificationDateTimeText;
+            FeedHeader.RetrieveLimitHrs = "1";
+            FeedHeader.RetentionDays = "45";
 
-            if (!File.Exists(filePath))
+            string filePath = GetNormalizedFeedFilePath(feedSaveDirectoryPath, FeedHeader);
+
+            if (File.Exists(filePath) == false)
             {
                 continue;
             }
 
-            using (StreamReader reader = new StreamReader(filePath))
+            using (StreamReader LineReader = new(filePath))
             {
-                string line;
-                FeedArticleUnion feedArticleUnion = new();
-                string previousURL = string.Empty;
+                string FileLine = string.Empty;
+                string PreviousURL = string.Empty;
 
-                Console.WriteLine($"Reading Feed {feedInfo.FeedName}");
+                FeedArticleUnion FeedArticlePair = new();
 
-                int counter = 0;
-
-                while (reader.EndOfStream == false && (line = reader.ReadLine() ?? string.Empty) is not null)
+                while (LineReader.EndOfStream == false && (FileLine = LineReader.ReadLine() ?? string.Empty) is not null)
                 {
-                    counter++;
-
-                    Console.WriteLine($"Reading line {counter}");
-
-                    if (string.IsNullOrWhiteSpace(line))
+                    if (string.IsNullOrWhiteSpace(FileLine))
                     {
-                        Console.WriteLine("skip empty line");
-
                         continue;
                     }
 
-                    string firstColumn = string.Empty;
-                    string secondColumn = string.Empty;
+                    string Col1 = string.Empty;
+                    string Col2 = string.Empty;
 
-                    if (line.Contains(_Tab))
+                    if (FileLine.Contains(_Tab))
                     {
-                        firstColumn = line.Substring(0, line.IndexOf(_Tab));
-                        secondColumn = line.Substring(line.IndexOf(_Tab) + 1);
+                        Col1 = FileLine.Substring(0, FileLine.IndexOf(_Tab));
+                        Col2 = FileLine.Substring(FileLine.IndexOf(_Tab) + 1);
                     }
-                    else if (firstColumn == "SUM")
+                    else if (Col1 == "SUM")
                     {
-                        feedArticleUnion.ArticleDetail.ArticleSummary += secondColumn;
+                        FeedArticlePair.ArticleDetail.ArticleSummary += Col2;
                     }
 
-                    if (firstColumn == "URL" && previousURL != secondColumn)
+                    if (Col1 == "URL" && PreviousURL != Col2)
                     {
-                        feedArticleUnion = new FeedArticleUnion
+                        FeedArticlePair = new FeedArticleUnion
                         {
-                            FeedHeader = feedInfo,
+                            FeedHeader = FeedHeader,
                             ArticleDetail = new FeedArticle()
                         };
 
-                        if (!feedsArticles.ContainsKey(feedInfo.FeedName))
+                        FeedArticlePair.ArticleDetail.RowInsertDateTime = ModificationDateTimeText;
+
+                        if (!FeedsArticles.ContainsKey(FeedHeader.FeedName))
                         {
-                            feedsArticles.Add(feedInfo.FeedName, new List<FeedArticleUnion>());
+                            FeedsArticles.Add(FeedHeader.FeedName, new List<FeedArticleUnion>());
                         }
 
-                        feedsArticles[feedInfo.FeedName].Add(feedArticleUnion);
+                        FeedsArticles[FeedHeader.FeedName].Add(FeedArticlePair);
 
-                        previousURL = secondColumn;
+                        PreviousURL = Col2;
                     }
 
-                    CreateFeedArticle(feedArticleUnion, firstColumn, secondColumn);
+                    CreateFeedArticle(FeedArticlePair, Col1, Col2);
                 }
             }
         }
 
-        WriteRSSArticlesToDatabase(connectionString, feedsArticles);
+        WriteRSSArticlesToDatabase(connectionString, FeedsArticles);
 
         return;
     }
@@ -361,95 +361,45 @@ public static class FeedDataExchange
 
     public static void WriteRSSArticlesToDatabase(string connectionString, SortedList<string, List<FeedArticleUnion>> feedsArticles)
     {
-        Console.WriteLine("Write RSS Articles");
+        string[] FeedColumnNames = GetSQLFeedsColumnNames();
 
-        using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+        string[] FeedArticleColumnNames = GetSQLFeedsArticlesColumnNames();
+
+        using (SQLiteConnection SQLConn = new(connectionString))
         {
-            Console.WriteLine("Open Connection");
+            SQLConn.Open();
 
-            connection.Open();
+            var FeedNames = feedsArticles.Keys;
 
-            Console.WriteLine("Write to tables");
+            SortedList<string, Feed> Feeds = new();
 
-            foreach (var feedArticlesPair in feedsArticles)
+            foreach (var FeedName in FeedNames)
             {
-                string feedName = feedArticlesPair.Key;
-                List<FeedArticleUnion> articles = feedArticlesPair.Value;
-
-                // Check if feed exists in the feeds table
-                string checkFeedCommandText = "SELECT COUNT(*) FROM feeds WHERE feed_name = @FeedName";
-                using (SQLiteCommand checkFeedCommand = new SQLiteCommand(checkFeedCommandText, connection))
+                if (Feeds.ContainsKey(FeedName) == false)
                 {
-                    checkFeedCommand.Parameters.AddWithValue("@FeedName", feedName);
-                    int existingFeedCount = Convert.ToInt32(checkFeedCommand.ExecuteScalar());
+                    var FUL = feedsArticles[FeedName];
 
-                    if (existingFeedCount == 0)
+                    if (FUL.Count > 0)
                     {
-                        // Insert new feed into feeds table
-                        string insertFeedCommandText = "INSERT INTO feeds (feed_name, feed_url) VALUES (@FeedName, @FeedUrl)";
-                        using (SQLiteCommand insertFeedCommand = new SQLiteCommand(insertFeedCommandText, connection))
-                        {
-                            insertFeedCommand.Parameters.AddWithValue("@FeedName", feedName);
-                            insertFeedCommand.Parameters.AddWithValue("@FeedUrl", articles[0].FeedHeader.FeedUrl);
-                            insertFeedCommand.ExecuteNonQuery();
-                        }
-                    }
-                    else
-                    {
-                        // Update last_retrieved column in feeds table
-                        string updateLastRetrievedCommandText = "UPDATE feeds SET last_retrieved = @LastRetrieved WHERE feed_name = @FeedName";
-                        using (SQLiteCommand updateLastRetrievedCommand = new SQLiteCommand(updateLastRetrievedCommandText, connection))
-                        {
-                            updateLastRetrievedCommand.Parameters.AddWithValue("@LastRetrieved", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                            updateLastRetrievedCommand.Parameters.AddWithValue("@FeedName", feedName);
-                            updateLastRetrievedCommand.ExecuteNonQuery();
-                        }
+                        var FU = FUL[0];
+
+                        Feeds[FeedName] = FU.FeedHeader;
                     }
                 }
+            }
+
+            foreach (var FeedName in FeedNames)
+            {
+                var FeedHeader = Feeds[FeedName];
+
+                List<FeedArticleUnion> FeedArticles = feedsArticles[FeedName];
+
+                ModifyFeed(SQLConn, FeedHeader, FeedColumnNames);
 
                 // Insert or update articles in feeds_articles table
-                foreach (var article in articles)
+                foreach (var article in FeedArticles)
                 {
-                    string checkArticleCommandText = "SELECT COUNT(*) FROM feeds_articles WHERE feed_name = @FeedName AND article_url = @ArticleUrl";
-                    using (SQLiteCommand checkArticleCommand = new SQLiteCommand(checkArticleCommandText, connection))
-                    {
-                        checkArticleCommand.Parameters.AddWithValue("@FeedName", feedName);
-                        checkArticleCommand.Parameters.AddWithValue("@ArticleUrl", article.ArticleDetail.ArticleUrl);
-                        int existingArticleCount = Convert.ToInt32(checkArticleCommand.ExecuteScalar());
-
-                        if (existingArticleCount == 0)
-                        {
-                            // Insert new article into feeds_articles table
-                            string insertArticleCommandText = "INSERT INTO feeds_articles (feed_name, headline_text, article_summary, article_text, article_date, article_url) " +
-                                "VALUES (@FeedName, @HeadlineText, @ArticleSummary, @ArticleText, @ArticleDate, @ArticleUrl)";
-                            using (SQLiteCommand insertArticleCommand = new SQLiteCommand(insertArticleCommandText, connection))
-                            {
-                                insertArticleCommand.Parameters.AddWithValue("@FeedName", feedName);
-                                insertArticleCommand.Parameters.AddWithValue("@HeadlineText", article.ArticleDetail.HeadlineText);
-                                insertArticleCommand.Parameters.AddWithValue("@ArticleSummary", article.ArticleDetail.ArticleSummary);
-                                insertArticleCommand.Parameters.AddWithValue("@ArticleText", article.ArticleDetail.ArticleText);
-                                insertArticleCommand.Parameters.AddWithValue("@ArticleDate", article.ArticleDetail.ArticleDate);
-                                insertArticleCommand.Parameters.AddWithValue("@ArticleUrl", article.ArticleDetail.ArticleUrl);
-                                insertArticleCommand.ExecuteNonQuery();
-                            }
-                        }
-                        else
-                        {
-                            // Update existing article in feeds_articles table
-                            string updateArticleCommandText = "UPDATE feeds_articles SET headline_text = @HeadlineText, article_summary = @ArticleSummary, " +
-                                "article_text = @ArticleText, article_date = @ArticleDate WHERE feed_name = @FeedName AND article_url = @ArticleUrl";
-                            using (SQLiteCommand updateArticleCommand = new SQLiteCommand(updateArticleCommandText, connection))
-                            {
-                                updateArticleCommand.Parameters.AddWithValue("@HeadlineText", article.ArticleDetail.HeadlineText);
-                                updateArticleCommand.Parameters.AddWithValue("@ArticleSummary", article.ArticleDetail.ArticleSummary);
-                                updateArticleCommand.Parameters.AddWithValue("@ArticleText", article.ArticleDetail.ArticleText);
-                                updateArticleCommand.Parameters.AddWithValue("@ArticleDate", article.ArticleDetail.ArticleDate);
-                                updateArticleCommand.Parameters.AddWithValue("@FeedName", feedName);
-                                updateArticleCommand.Parameters.AddWithValue("@ArticleUrl", article.ArticleDetail.ArticleUrl);
-                                updateArticleCommand.ExecuteNonQuery();
-                            }
-                        }
-                    }
+                    ModifyFeedArticle(SQLConn, FeedHeader, article, FeedArticleColumnNames);
                 }
             }
         }
@@ -457,4 +407,246 @@ public static class FeedDataExchange
         return;
     }
 
+    private static string[] GetSQLFeedsArticlesColumnNames()
+    {
+        return new string[]
+        {
+            "feed_name",
+            "headline_text",
+            "article_summary",
+            "article_text",
+            "article_date",
+            "article_url",
+            "row_insert_date_time"
+        };
+    }
+
+    private static string[] GetSQLFeedsColumnNames()
+    {
+        return new string[]
+        {
+            "feed_name",
+            "feed_url",
+            "last_retrieved",
+            "retrieve_limit_hrs",
+            "retention_days"
+        };
+    }
+
+    private static void ModifyFeedArticle(SQLiteConnection sqlConn, Feed feedHeader, FeedArticleUnion article, string[] columnNames)
+    {
+        const string TableName = "feeds_articles";
+
+        string RowCheckCommandText = $"SELECT COUNT(*) FROM {TableName} WHERE feed_name = @FeedName AND article_url = @ArticleUrl;";
+
+        using (SQLiteCommand RowCheckSQLCmd = new(RowCheckCommandText, sqlConn))
+        {
+            RowCheckSQLCmd.Parameters.AddWithValue("@FeedName", feedHeader.FeedName);
+            RowCheckSQLCmd.Parameters.AddWithValue("@ArticleUrl", article.ArticleDetail.ArticleUrl);
+
+            int RowCount = Convert.ToInt32(RowCheckSQLCmd.ExecuteScalar());
+
+            if (RowCount == 0)
+            {
+                // Insert new article into feeds_articles table
+                StringBuilder CommandText = CreateSQLInsertCMDText(TableName, columnNames);
+
+                using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
+                {
+                    CreateFeedArticleParameters(SQLCmd, article.ArticleDetail, columnNames);
+
+                    SQLCmd.ExecuteNonQuery();
+                }
+            }
+            else
+            {
+                // Update existing article in feeds_articles table
+                StringBuilder CommandText = CreateSQLUpdateCMDText(TableName, columnNames);
+                CommandText.Append("feed_name = @feed_name AND article_url = @article_url;");
+
+                using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
+                {
+                    CreateFeedArticleParameters(SQLCmd, article.ArticleDetail, columnNames);
+
+                    SQLCmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        return;
+    }
+
+    private static void ModifyFeed(SQLiteConnection sqlConn, Feed feedHeader, string[] columnNames)
+    {
+        const string TableName = "feeds";
+
+        // Check if feed exists in the feeds table
+        string RowCheckCommandText = $"SELECT COUNT(*) FROM {TableName} WHERE feed_name = @FeedName";
+
+        using (SQLiteCommand RowCheckSQLCmd = new(RowCheckCommandText, sqlConn))
+        {
+            RowCheckSQLCmd.Parameters.AddWithValue("@FeedName", feedHeader.FeedName);
+
+            int RowCount = Convert.ToInt32(RowCheckSQLCmd.ExecuteScalar());
+
+            if (RowCount == 0)
+            {
+                StringBuilder CommandText = CreateSQLInsertCMDText(TableName, columnNames);
+
+                using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
+                {
+                    CreateFeedParameters(SQLCmd, feedHeader, columnNames);
+
+                    SQLCmd.ExecuteNonQuery();
+                }
+            }
+            else
+            {
+                // Update last_retrieved column in feeds table
+                StringBuilder CommandText = CreateSQLUpdateCMDText(TableName, columnNames);
+                CommandText.Append("feed_name = @feed_name;");
+
+                using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
+                {
+                    CreateFeedParameters(SQLCmd, feedHeader, columnNames);
+
+                    SQLCmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        return;
+    }
+
+    private static void CreateFeedParameters(SQLiteCommand SQLCmd, Feed FeedHeader, string[] columnNames)
+    {
+        foreach (var ColumnName in columnNames)
+        {
+            string ParamName = $"@{ColumnName}";
+            string ParamValue = string.Empty;
+
+            switch (ColumnName)
+            {
+                case "feed_name":
+                    ParamValue = $"{FeedHeader.FeedName}";
+                    break;
+                case "feed_url":
+                    ParamValue = $"{FeedHeader.FeedUrl}";
+                    break;
+                case "last_retrieved":
+                    ParamValue = $"{FeedHeader.LastRetrieved}";
+                    break;
+                case "retrieve_limit_hrs":
+                    ParamValue = $"{FeedHeader.RetrieveLimitHrs}";
+                    break;
+                case "retention_days":
+                    ParamValue = $"{FeedHeader.RetentionDays}";
+                    break;
+            }
+
+            SQLCmd.Parameters.AddWithValue(ParamName, ParamValue);
+        }
+
+        return;
+    }
+
+    private static void CreateFeedArticleParameters(SQLiteCommand SQLCmd, FeedArticle article, string[] columnNames)
+    {
+        foreach (var ColumnName in columnNames)
+        {
+            string ParamName = $"@{ColumnName}";
+            string ParamValue = string.Empty;
+
+            switch (ColumnName)
+            {
+                case "feed_name":
+                    ParamValue = $"{article.FeedName}";
+                    break;
+                case "headline_text":
+                    ParamValue = $"{article.HeadlineText}";
+                    break;
+                case "article_summary":
+                    ParamValue = $"{article.ArticleSummary}";
+                    break;
+                case "article_text":
+                    ParamValue = $"{article.ArticleText}";
+                    break;
+                case "article_date":
+                    ParamValue = $"{article.ArticleDate}";
+                    break;
+                case "article_url":
+                    ParamValue = $"{article.ArticleUrl}";
+                    break;
+                case "row_insert_date_time":
+                    ParamValue = $"{article.RowInsertDateTime}";
+                    break;
+            }
+
+            SQLCmd.Parameters.AddWithValue(ParamName, ParamValue);
+        }
+
+        return;
+    }
+
+    private static StringBuilder CreateSQLInsertCMDText(string tableName, string[] columnNames)
+    {
+        StringBuilder ColumnNameSB = new();
+        ColumnNameSB.AppendLine($"INSERT INTO {tableName} (");
+
+        StringBuilder ColumnValuesSB = new();
+
+        for (int ColI = 0; ColI < columnNames.Length; ColI++)
+        {
+            var ColumnName = columnNames[ColI];
+            string ParamName = $"@{ColumnName}";
+
+            string Sep = ",";
+
+            if (ColI + 1 == columnNames.Length)
+            {
+                Sep = string.Empty;
+            }
+
+            ColumnNameSB.AppendLine($"{ColumnName}{Sep}");
+            ColumnValuesSB.AppendLine($"{ParamName}{Sep}");
+        }
+
+        ColumnNameSB.AppendLine(") VALUES (");
+        ColumnValuesSB.AppendLine(");");
+
+        StringBuilder CommandText = new();
+
+        CommandText.Append($"{ColumnNameSB}{ColumnValuesSB};");
+
+        return CommandText;
+    }
+
+    private static StringBuilder CreateSQLUpdateCMDText(string tableName, string[] columnNames)
+    {
+        StringBuilder ColumnNameSB = new();
+        ColumnNameSB.AppendLine($"UPDATE {tableName} SET ");
+
+        for (int ColI = 0; ColI < columnNames.Length; ColI++)
+        {
+            var ColumnName = columnNames[ColI];
+            string ParamName = $"@{ColumnName}";
+
+            string Sep = ",";
+
+            if (ColI + 1 == columnNames.Length)
+            {
+                Sep = string.Empty;
+            }
+
+            ColumnNameSB.AppendLine($"{ColumnName} = {ParamName}{Sep}");
+        }
+
+        ColumnNameSB.AppendLine(" WHERE ");
+
+        StringBuilder CommandText = new();
+
+        CommandText.Append($"{ColumnNameSB}");
+
+        return CommandText;
+    }
 }
