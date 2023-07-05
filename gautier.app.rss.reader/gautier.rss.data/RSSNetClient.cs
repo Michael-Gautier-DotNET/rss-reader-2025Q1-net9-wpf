@@ -12,13 +12,11 @@ namespace gautier.rss.data
     {
         public static void CreateRSSFeedFile(string feedUrl, string rssFeedFilePath)
         {
-            using (var feedXml = XmlReader.Create(feedUrl))
-            {
-                using (var feedXmlWriter = XmlWriter.Create(rssFeedFilePath))
-                {
-                    feedXmlWriter.WriteNode(feedXml, false);
-                }
-            }
+            using XmlReader feedXml = XmlReader.Create(feedUrl);
+
+            using XmlWriter feedXmlWriter = XmlWriter.Create(rssFeedFilePath);
+
+            feedXmlWriter.WriteNode(feedXml, false);
 
             return;
         }
@@ -31,10 +29,9 @@ namespace gautier.rss.data
             {
                 try
                 {
-                    using (var RSSXmlFile = XmlReader.Create(rssFeedFilePath))
-                    {
-                        RSSFeed = SyndicationFeed.Load(RSSXmlFile);
-                    }
+                    using XmlReader RSSXmlFile = XmlReader.Create(rssFeedFilePath);
+
+                    RSSFeed = SyndicationFeed.Load(RSSXmlFile);
                 }
                 catch (XmlException xmlE)
                 {
