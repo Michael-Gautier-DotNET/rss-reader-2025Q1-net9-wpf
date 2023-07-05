@@ -6,6 +6,8 @@ namespace gautier.rss.data;
 
 public static class FeedDataExchange
 {
+   private const char _Tab = '\t';
+
     public static SortedList<string, Feed> GetAllFeeds(string sqlConnectionString)
     {
         var feeds = new SortedList<string, Feed>();
@@ -250,8 +252,6 @@ public static class FeedDataExchange
 
     public static void ImportStaticFeedFilesToDatabase(string feedSaveDirectoryPath, Feed[] feedInfos, string connectionString)
     {
-        const char Tab = '\t';
-
         SortedList<string, List<FeedArticleUnion>> feedsArticles = new SortedList<string, List<FeedArticleUnion>>();
 
         foreach (Feed feedInfo in feedInfos)
@@ -289,10 +289,10 @@ public static class FeedDataExchange
                     string firstColumn = string.Empty;
                     string secondColumn = string.Empty;
 
-                    if (line.Contains(Tab))
+                    if (line.Contains(_Tab))
                     {
-                        firstColumn = line.Substring(0, line.IndexOf(Tab));
-                        secondColumn = line.Substring(line.IndexOf(Tab) + 1);
+                        firstColumn = line.Substring(0, line.IndexOf(_Tab));
+                        secondColumn = line.Substring(line.IndexOf(_Tab) + 1);
                     }
                     else if (firstColumn == "SUM")
                     {

@@ -8,6 +8,8 @@ namespace gautier.rss.data
 {
     public static class FeedFileConverter
     {
+        private const char _Tab = '\t';
+
         /// <summary>
         /// Designed to generate static local files even if they are later accidentally deleted.
         /// </summary>
@@ -58,11 +60,11 @@ namespace gautier.rss.data
                     var ArticleDate = Article.ArticleDate;
                     var ArticleUrl = Article.ArticleUrl;
 
-                    RSSFeedFileOutput.AppendLine($"URL\t{ArticleUrl}");
-                    RSSFeedFileOutput.AppendLine($"DATE\t{ArticleDate}");
-                    RSSFeedFileOutput.AppendLine($"HEAD\t{HeadlineText}");
-                    RSSFeedFileOutput.AppendLine($"TEXT\t{ArticleText}");
-                    RSSFeedFileOutput.AppendLine($"SUM\t{ArticleSummary}");
+                    RSSFeedFileOutput.AppendLine($"URL{_Tab}{ArticleUrl}");
+                    RSSFeedFileOutput.AppendLine($"DATE{_Tab}{ArticleDate}");
+                    RSSFeedFileOutput.AppendLine($"HEAD{_Tab}{HeadlineText}");
+                    RSSFeedFileOutput.AppendLine($"TEXT{_Tab}{ArticleText}");
+                    RSSFeedFileOutput.AppendLine($"SUM{_Tab}{ArticleSummary}");
                 }
 
                 RSSFeedFile.Write(RSSFeedFileOutput.ToString());
