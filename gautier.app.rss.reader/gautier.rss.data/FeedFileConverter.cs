@@ -1,8 +1,5 @@
 ﻿using System.ServiceModel.Syndication;
 using System.Text;
-using System.Xml;
-
-using gautier.rss.data.RDFConversionXD;
 
 namespace gautier.rss.data
 {
@@ -17,11 +14,11 @@ namespace gautier.rss.data
         {
             foreach (var FeedInfo in feedInfos)
             {
-                var FeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, FeedInfo);
+                string FeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, FeedInfo);
 
                 if (File.Exists(FeedFilePath) == false)
                 {
-                    CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
+                    RSSNetClient.CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
                 }
             }
 
@@ -47,18 +44,18 @@ namespace gautier.rss.data
 
         private static void WriteRSSArticlesToFile(string feedSaveDirectoryPath, Feed feedInfo, List<FeedArticle> feedArticles)
         {
-            var RSSFeedFileOutput = new StringBuilder();
-            var NormalizedFeedFilePath = GetNormalizedFeedFilePath(feedSaveDirectoryPath, feedInfo);
+            StringBuilder RSSFeedFileOutput = new();
+            string NormalizedFeedFilePath = GetNormalizedFeedFilePath(feedSaveDirectoryPath, feedInfo);
 
-            using (var RSSFeedFile = new StreamWriter(NormalizedFeedFilePath, false))
+            using (StreamWriter RSSFeedFile = new(NormalizedFeedFilePath, false))
             {
                 foreach (var Article in feedArticles)
                 {
-                    var HeadlineText = Article.HeadlineText;
-                    var ArticleSummary = Article.ArticleSummary;
-                    var ArticleText = Article.ArticleText;
-                    var ArticleDate = Article.ArticleDate;
-                    var ArticleUrl = Article.ArticleUrl;
+                    string HeadlineText = Article.HeadlineText;
+                    string ArticleSummary = Article.ArticleSummary;
+                    string ArticleText = Article.ArticleText;
+                    string ArticleDate = Article.ArticleDate;
+                    string ArticleUrl = Article.ArticleUrl;
 
                     RSSFeedFileOutput.AppendLine($"URL{_Tab}{ArticleUrl}");
                     RSSFeedFileOutput.AppendLine($"DATE{_Tab}{ArticleDate}");
@@ -80,20 +77,22 @@ namespace gautier.rss.data
 
         private static SortedList<string, List<FeedArticle>> TransformMSSyndicationToFeedArticles(string feedSaveDirectoryPath, Feed[] feedInfos)
         {
-            var FeedArticles = new SortedList<string, List<FeedArticle>>();
+            SortedList<string, List<FeedArticle>> FeedArticles = new();
 
             foreach (var FeedInfo in feedInfos)
             {
-                SyndicationFeed RSSFeed = GetSyndicationFeed(feedSaveDirectoryPath, FeedInfo);
+                string RSSFeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, FeedInfo);
+
+                SyndicationFeed RSSFeed = RSSNetClient.CreateRSSSyndicationFeed(RSSFeedFilePath);
 
                 if (RSSFeed.Items.Any())
                 {
                     if (FeedArticles.ContainsKey(FeedInfo.FeedName) == false)
                     {
-                        FeedArticles[FeedInfo.FeedName] = new List<FeedArticle>();
+                        FeedArticles[FeedInfo.FeedName] = new();
                     }
 
-                    var Articles = FeedArticles[FeedInfo.FeedName];
+                    List<FeedArticle> Articles = FeedArticles[FeedInfo.FeedName];
 
                     foreach (var RSSItem in RSSFeed.Items)
                     {
@@ -116,21 +115,21 @@ namespace gautier.rss.data
             {
                 case "TextSyndicationContent":
                     {
-                        var Content = syndicate.Content as TextSyndicationContent;
+                        TextSyndicationContent? Content = syndicate.Content as TextSyndicationContent;
 
                         ArticleText = Content?.Text ?? string.Empty;
                     }
                     break;
                 case "UrlSyndicationContent":
                     {
-                        var Content = syndicate.Content as UrlSyndicationContent;
+                        UrlSyndicationContent? Content = syndicate.Content as UrlSyndicationContent;
 
                         ArticleText = Content?.Url.AbsoluteUri ?? string.Empty;
                     }
                     break;
                 case "XmlSyndicationContent":
                     {
-                        var Content = syndicate.Content as XmlSyndicationContent;
+                        XmlSyndicationContent? Content = syndicate.Content as XmlSyndicationContent;
 
                         ArticleText = Content?.ToString() ?? string.Empty;
                     }
@@ -165,50 +164,6 @@ namespace gautier.rss.data
                 ArticleUrl = ArticleUrl,
                 RowInsertDateTime = DateTime.Now.ToString()
             };
-        }
-
-        private static SyndicationFeed GetSyndicationFeed(string feedSaveDirectoryPath, Feed FeedInfo)
-        {
-            var RSSFeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, FeedInfo);
-
-            SyndicationFeed RSSFeed = new();
-
-            if (File.Exists(RSSFeedFilePath) == true)
-            {
-                try
-                {
-                    using (var RSSXmlFile = XmlReader.Create(RSSFeedFilePath))
-                    {
-                        RSSFeed = SyndicationFeed.Load(RSSXmlFile);
-                    }
-                }
-                catch (XmlException xmlE)
-                {
-                    bool ExceptionContainsRDF = xmlE.Message.Contains("'RDF'");
-                    bool ExceptionContainsInvalidFormat = xmlE.Message.Contains("not an allowed feed format");
-
-                    if (ExceptionContainsRDF && ExceptionContainsInvalidFormat)
-                    {
-                        RSSFeed = SyndicationConverter.ConvertToSyndicationFeed(RSSFeedFilePath);
-                    }
-                }
-
-            }
-
-            return RSSFeed;
-        }
-
-        private static void CreateRSSFeedFile(string feedUrl, string feedFilePath)
-        {
-            using (var feedXml = XmlReader.Create(feedUrl))
-            {
-                using (var feedXmlWriter = XmlWriter.Create(feedFilePath))
-                {
-                    feedXmlWriter.WriteNode(feedXml, false);
-                }
-            }
-
-            return;
         }
 
         private static string GetFeedFilePath(string feedSaveDirectoryPath, Feed feedInfo)
