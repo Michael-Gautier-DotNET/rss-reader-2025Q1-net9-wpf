@@ -18,7 +18,7 @@ namespace gautier.rss.data.RSSDb
             "row_insert_date_time"
         };
 
-        public static int GetFeedArticleCount(SQLiteConnection sqlConn)
+        public static int CountAllRows(SQLiteConnection sqlConn)
         {
             int Count = 0;
 
@@ -32,7 +32,7 @@ namespace gautier.rss.data.RSSDb
             return Count;
         }
 
-        public static int GetFeedArticleCount(SQLiteConnection sqlConn, string feedName)
+        public static int CountRows(SQLiteConnection sqlConn, string feedName)
         {
             int Count = 0;
 
@@ -48,7 +48,7 @@ namespace gautier.rss.data.RSSDb
             return Count;
         }
 
-        public static int GetFeedArticleCount(SQLiteConnection sqlConn, string feedName, string articleUrl)
+        public static int CountRows(SQLiteConnection sqlConn, string feedName, string articleUrl)
         {
             int Count = 0;
 
@@ -65,7 +65,21 @@ namespace gautier.rss.data.RSSDb
             return Count;
         }
 
-        internal static void CreateFeedArticleParameters(SQLiteCommand SQLCmd, FeedArticle article, string[] columnNames)
+        public static bool Exists(SQLiteConnection sqlConn, string feedName)
+        {
+            int Count = CountRows(sqlConn, feedName);
+
+            return Count > 0;
+        }
+
+        public static bool Exists(SQLiteConnection sqlConn, string feedName, string articleUrl)
+        {
+            int Count = CountRows(sqlConn, feedName, articleUrl);
+
+            return Count > 0;
+        }
+
+        internal static void MapSQLParametersToAllTableColumns(SQLiteCommand SQLCmd, FeedArticle article, string[] columnNames)
         {
             foreach (var ColumnName in columnNames)
             {

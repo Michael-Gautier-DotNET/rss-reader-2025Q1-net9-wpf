@@ -13,7 +13,7 @@ namespace gautier.rss.data.RSSDb
 
             using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
             {
-                FeedArticleReader.CreateFeedArticleParameters(SQLCmd, article.ArticleDetail, _ColumnNames);
+                FeedArticleReader.MapSQLParametersToAllTableColumns(SQLCmd, article.ArticleDetail, _ColumnNames);
 
                 SQLCmd.ExecuteNonQuery();
             }
@@ -28,7 +28,7 @@ namespace gautier.rss.data.RSSDb
 
             using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
             {
-                FeedArticleReader.CreateFeedArticleParameters(SQLCmd, article.ArticleDetail, _ColumnNames);
+                FeedArticleReader.MapSQLParametersToAllTableColumns(SQLCmd, article.ArticleDetail, _ColumnNames);
 
                 SQLCmd.ExecuteNonQuery();
             }

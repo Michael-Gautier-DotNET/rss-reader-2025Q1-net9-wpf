@@ -16,7 +16,7 @@ namespace gautier.rss.data.RSSDb
             "retention_days"
         };
 
-        public static int GetFeedCount(SQLiteConnection sqlConn)
+        public static int CountAllRows(SQLiteConnection sqlConn)
         {
             int Count = 0;
 
@@ -30,7 +30,7 @@ namespace gautier.rss.data.RSSDb
             return Count;
         }
 
-        public static int GetFeedCount(SQLiteConnection sqlConn, string feedName)
+        public static int CountRows(SQLiteConnection sqlConn, string feedName)
         {
             int Count = 0;
 
@@ -46,7 +46,14 @@ namespace gautier.rss.data.RSSDb
             return Count;
         }
 
-        internal static void CreateFeedParameters(SQLiteCommand SQLCmd, Feed FeedHeader, string[] columnNames)
+        public static bool Exists(SQLiteConnection sqlConn, string feedName)
+        {
+            int Count = CountRows(sqlConn, feedName);
+
+            return Count > 0;
+        }
+
+        internal static void MapSQLParametersToAllTableColumns(SQLiteCommand SQLCmd, Feed FeedHeader, string[] columnNames)
         {
             foreach (var ColumnName in columnNames)
             {

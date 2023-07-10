@@ -421,7 +421,7 @@ public static class FeedDataExchange
 
     private static void ModifyFeedArticle(SQLiteConnection sqlConn, Feed feedHeader, FeedArticleUnion article)
     {
-        int RowCount = FeedArticleReader.GetFeedArticleCount(sqlConn, feedHeader.FeedName, article.ArticleDetail.ArticleUrl);
+        int RowCount = FeedArticleReader.CountRows(sqlConn, feedHeader.FeedName, article.ArticleDetail.ArticleUrl);
 
         if (RowCount == 0)
         {
@@ -437,7 +437,7 @@ public static class FeedDataExchange
 
     private static void ModifyFeed(SQLiteConnection sqlConn, Feed feedHeader)
     {
-        int RowCount = FeedReader.GetFeedCount(sqlConn, feedHeader.FeedName);
+        int RowCount = FeedReader.CountRows(sqlConn, feedHeader.FeedName);
 
         if (RowCount == 0)
         {
