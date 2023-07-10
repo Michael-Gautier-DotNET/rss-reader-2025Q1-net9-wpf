@@ -2,6 +2,8 @@
 using System.Data.SQLite;
 using System.Text;
 
+using gautier.rss.data.RSSDb;
+
 namespace gautier.rss.data;
 
 public static class FeedDataExchange
@@ -437,39 +439,31 @@ public static class FeedDataExchange
     {
         const string TableName = "feeds_articles";
 
-        string RowCheckCommandText = $"SELECT COUNT(*) FROM {TableName} WHERE feed_name = @FeedName AND article_url = @ArticleUrl;";
+        int RowCount = FeedArticleReader.GetFeedArticleCount(sqlConn, feedHeader.FeedName, article.ArticleDetail.ArticleUrl);
 
-        using (SQLiteCommand RowCheckSQLCmd = new(RowCheckCommandText, sqlConn))
+        if (RowCount == 0)
         {
-            RowCheckSQLCmd.Parameters.AddWithValue("@FeedName", feedHeader.FeedName);
-            RowCheckSQLCmd.Parameters.AddWithValue("@ArticleUrl", article.ArticleDetail.ArticleUrl);
+            // Insert new article into feeds_articles table
+            StringBuilder CommandText = CreateSQLInsertCMDText(TableName, columnNames);
 
-            int RowCount = Convert.ToInt32(RowCheckSQLCmd.ExecuteScalar());
-
-            if (RowCount == 0)
+            using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
             {
-                // Insert new article into feeds_articles table
-                StringBuilder CommandText = CreateSQLInsertCMDText(TableName, columnNames);
+                CreateFeedArticleParameters(SQLCmd, article.ArticleDetail, columnNames);
 
-                using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
-                {
-                    CreateFeedArticleParameters(SQLCmd, article.ArticleDetail, columnNames);
-
-                    SQLCmd.ExecuteNonQuery();
-                }
+                SQLCmd.ExecuteNonQuery();
             }
-            else
+        }
+        else
+        {
+            // Update existing article in feeds_articles table
+            StringBuilder CommandText = CreateSQLUpdateCMDText(TableName, columnNames);
+            CommandText.Append("feed_name = @feed_name AND article_url = @article_url;");
+
+            using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
             {
-                // Update existing article in feeds_articles table
-                StringBuilder CommandText = CreateSQLUpdateCMDText(TableName, columnNames);
-                CommandText.Append("feed_name = @feed_name AND article_url = @article_url;");
+                CreateFeedArticleParameters(SQLCmd, article.ArticleDetail, columnNames);
 
-                using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
-                {
-                    CreateFeedArticleParameters(SQLCmd, article.ArticleDetail, columnNames);
-
-                    SQLCmd.ExecuteNonQuery();
-                }
+                SQLCmd.ExecuteNonQuery();
             }
         }
 
@@ -480,38 +474,30 @@ public static class FeedDataExchange
     {
         const string TableName = "feeds";
 
-        // Check if feed exists in the feeds table
-        string RowCheckCommandText = $"SELECT COUNT(*) FROM {TableName} WHERE feed_name = @FeedName";
+        int RowCount = FeedReader.GetFeedCount(sqlConn, feedHeader.FeedName);
 
-        using (SQLiteCommand RowCheckSQLCmd = new(RowCheckCommandText, sqlConn))
+        if (RowCount == 0)
         {
-            RowCheckSQLCmd.Parameters.AddWithValue("@FeedName", feedHeader.FeedName);
+            StringBuilder CommandText = CreateSQLInsertCMDText(TableName, columnNames);
 
-            int RowCount = Convert.ToInt32(RowCheckSQLCmd.ExecuteScalar());
-
-            if (RowCount == 0)
+            using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
             {
-                StringBuilder CommandText = CreateSQLInsertCMDText(TableName, columnNames);
+                CreateFeedParameters(SQLCmd, feedHeader, columnNames);
 
-                using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
-                {
-                    CreateFeedParameters(SQLCmd, feedHeader, columnNames);
-
-                    SQLCmd.ExecuteNonQuery();
-                }
+                SQLCmd.ExecuteNonQuery();
             }
-            else
+        }
+        else
+        {
+            // Update last_retrieved column in feeds table
+            StringBuilder CommandText = CreateSQLUpdateCMDText(TableName, columnNames);
+            CommandText.Append("feed_name = @feed_name;");
+
+            using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
             {
-                // Update last_retrieved column in feeds table
-                StringBuilder CommandText = CreateSQLUpdateCMDText(TableName, columnNames);
-                CommandText.Append("feed_name = @feed_name;");
+                CreateFeedParameters(SQLCmd, feedHeader, columnNames);
 
-                using (SQLiteCommand SQLCmd = new(CommandText.ToString(), sqlConn))
-                {
-                    CreateFeedParameters(SQLCmd, feedHeader, columnNames);
-
-                    SQLCmd.ExecuteNonQuery();
-                }
+                SQLCmd.ExecuteNonQuery();
             }
         }
 
