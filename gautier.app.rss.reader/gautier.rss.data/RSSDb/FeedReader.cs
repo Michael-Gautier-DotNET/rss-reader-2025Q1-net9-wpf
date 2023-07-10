@@ -7,6 +7,15 @@ namespace gautier.rss.data.RSSDb
         private static readonly string _TableName = "feeds";
         public static string TableName => _TableName;
 
+        public static string[] TableColumnNames => new string[]
+        {
+            "feed_name",
+            "feed_url",
+            "last_retrieved",
+            "retrieve_limit_hrs",
+            "retention_days"
+        };
+
         public static int GetFeedCount(SQLiteConnection sqlConn)
         {
             int Count = 0;
@@ -67,21 +76,6 @@ namespace gautier.rss.data.RSSDb
             }
 
             return;
-        }
-
-        internal static string[] TableColumnNames
-        {
-            get
-            {
-                return new string[]
-                {
-                    "feed_name",
-                    "feed_url",
-                    "last_retrieved",
-                    "retrieve_limit_hrs",
-                    "retention_days"
-                };
-            }
         }
     }
 }
