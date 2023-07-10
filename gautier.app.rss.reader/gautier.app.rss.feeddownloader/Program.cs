@@ -1,4 +1,5 @@
 ﻿using gautier.rss.data;
+using gautier.rss.data.RSSDb;
 
 namespace gautier.app.rss.feeddownloader
 {
@@ -6,7 +7,7 @@ namespace gautier.app.rss.feeddownloader
     {
         private static readonly string _FeedSaveDirectoryPath = @"C:\RSSFeeds\";
         private static readonly Feed[] _FeedInfos = GetStaticFeedInfos();
-        private static readonly string _RSSFeedsDbConnectionString = @"Data Source=rss.db; Version=3;";
+        private static readonly string _FeedDbFilePath = @"rss.db";
 
         internal static void Main(string[] args)
         {
@@ -16,7 +17,7 @@ namespace gautier.app.rss.feeddownloader
 
             FeedFileConverter.TransformStaticFeedFiles(_FeedSaveDirectoryPath, _FeedInfos);
 
-            FeedDataExchange.ImportStaticFeedFilesToDatabase(_FeedSaveDirectoryPath, _FeedInfos, _RSSFeedsDbConnectionString);
+            FeedDataExchange.ImportStaticFeedFilesToDatabase(_FeedSaveDirectoryPath, _FeedInfos, _FeedDbFilePath);
 
             return;
         }

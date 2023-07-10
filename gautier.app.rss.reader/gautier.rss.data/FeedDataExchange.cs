@@ -360,11 +360,11 @@ public static class FeedDataExchange
         return feedArticle;
     }
 
-    public static void WriteRSSArticlesToDatabase(string connectionString, SortedList<string, List<FeedArticleUnion>> feedsArticles)
+    public static void WriteRSSArticlesToDatabase(string sqliteDbFilePath, SortedList<string, List<FeedArticleUnion>> feedsArticles)
     {
-        using SQLiteConnection SQLConn = new(connectionString);
+        string ConnectionString = SQLUtil.GetSQLiteConnectionString(sqliteDbFilePath, 3);
 
-        SQLConn.Open();
+        using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
 
         var FeedNames = feedsArticles.Keys;
 

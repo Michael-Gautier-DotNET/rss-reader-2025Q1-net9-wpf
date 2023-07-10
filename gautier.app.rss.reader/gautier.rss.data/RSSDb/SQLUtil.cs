@@ -1,9 +1,24 @@
-﻿using System.Text;
+﻿using System.Data.SQLite;
+using System.Text;
 
 namespace gautier.rss.data.RSSDb
 {
-    internal class SQLUtil
+    public class SQLUtil
     {
+        public static string GetSQLiteConnectionString(string sqliteDbFilePath, int sqliteVersion)
+        {
+            return $@"Data Source={sqliteDbFilePath}; Version={sqliteVersion};";
+        }
+
+        public static SQLiteConnection OpenSQLiteConnection(string connectionString)
+        {
+            SQLiteConnection SQLConn = new(connectionString);
+
+            SQLConn.Open();
+
+            return SQLConn;
+        }
+
         internal static StringBuilder CreateSQLInsertCMDText(string tableName, string[] columnNames)
         {
             StringBuilder ColumnNameSB = new();
