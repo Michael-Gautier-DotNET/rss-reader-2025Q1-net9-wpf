@@ -251,7 +251,7 @@ public static class FeedDataExchange
         return feeds_articles;
     }
 
-    public static void ImportStaticFeedFilesToDatabase(string feedSaveDirectoryPath, string sqlDbConnectionString, Feed[] feedInfos)
+    public static void ImportStaticFeedFilesToDatabase(string feedSaveDirectoryPath, string feedDbFilePath, Feed[] feedInfos)
     {
         SortedList<string, List<FeedArticleUnion>> FeedsArticles = new();
 
@@ -323,7 +323,7 @@ public static class FeedDataExchange
             }
         }
 
-        WriteRSSArticlesToDatabase(sqlDbConnectionString, FeedsArticles);
+        WriteRSSArticlesToDatabase(feedDbFilePath, FeedsArticles);
 
         return;
     }
@@ -360,9 +360,9 @@ public static class FeedDataExchange
         return feedArticle;
     }
 
-    public static void WriteRSSArticlesToDatabase(string sqliteDbFilePath, SortedList<string, List<FeedArticleUnion>> feedsArticles)
+    public static void WriteRSSArticlesToDatabase(string feedDbFilePath, SortedList<string, List<FeedArticleUnion>> feedsArticles)
     {
-        string ConnectionString = SQLUtil.GetSQLiteConnectionString(sqliteDbFilePath, 3);
+        string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
 
         using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
 

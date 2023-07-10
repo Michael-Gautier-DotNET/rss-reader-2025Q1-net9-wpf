@@ -1,5 +1,8 @@
-﻿using System.ServiceModel.Syndication;
+﻿using System.Data.SQLite;
+using System.ServiceModel.Syndication;
 using System.Text;
+
+using gautier.rss.data.RSSDb;
 
 namespace gautier.rss.data
 {
@@ -10,8 +13,12 @@ namespace gautier.rss.data
         /// <summary>
         /// Designed to generate static local files even if they are later accidentally deleted.
         /// </summary>
-        public static void CreateStaticFeedFiles(string feedSaveDirectoryPath, string sqlDbConnectionString, Feed[] feedInfos)
+        public static void CreateStaticFeedFiles(string feedSaveDirectoryPath, string feedDbFilePath, Feed[] feedInfos)
         {
+            string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
+
+            using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
+
             foreach (var FeedInfo in feedInfos)
             {
                 string FeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, FeedInfo);
@@ -19,6 +26,39 @@ namespace gautier.rss.data
                 if (File.Exists(FeedFilePath) == false)
                 {
                     RSSNetClient.CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
+                }
+                /*
+                 * VERY IMPORTANT
+                 *      This function is the central nexus that determines if the entire program
+                 *         is a naive implementation versus an actual RSS implementation.
+                 *         Feeds should update at regular intervals without causing issues
+                 *         related to accessing the source websites too often.
+                 */
+                else
+                {
+                    bool Exists = FeedReader.Exists(SQLConn, FeedInfo.FeedName);
+
+                    if(Exists)
+                    /*
+                     * Go into a complex logic cycle.
+                     *      The main goal is to update the feed based on the columns:
+                                "last_retrieved",
+                                "retrieve_limit_hrs",
+                                "retention_days"
+                     */
+                    {
+
+                    }
+                    /*
+                     * Indicates a situation where the file exists but the table entry was deleted.
+                     *      That can happen during testing, development and modification of the system.
+                     *      In rare instances, the database had to be wiped out and and re-established from 
+                     *      local cache files.
+                     */
+                    else
+                    {
+
+                    }
                 }
             }
 
