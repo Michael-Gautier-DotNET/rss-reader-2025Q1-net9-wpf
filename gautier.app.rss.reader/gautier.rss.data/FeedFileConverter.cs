@@ -51,27 +51,45 @@ namespace gautier.rss.data
                  */
                 bool Exists = FeedReader.Exists(SQLConn, FeedInfo.FeedName);
 
+                /*
+                 * Default assumption is the file should be created when there is no file.
+                 * This should be overriden however when the logic shows a feed was already
+                 *   accessed over the network within the upper time limit of 60 minutes.
+                 */
+                bool ShouldCacheFileBeCreated = (File.Exists(FeedFilePath) == false);
+
+                /*
+                 * An RSS feed database table entry exists and should be used to determine
+                 *    if the feed should be retrieved versus reusing a local cache file.
+                 */
                 if (Exists)
                 /*
                  * Go into a complex logic cycle.
-                 *      The main goal is to update the feed based on the columns:
+                 *      The main goal is to access the feed based on the columns:
                             "last_retrieved",
                             "retrieve_limit_hrs",
                             "retention_days"
+
+                    Remember to set the ShouldCacheFileBeCreated = false when
+                        there is an indication a feed website was recently accessed.
+                    Even when there is no local file but the feed was accessed over the network,
+                    that situation must still be respected to avoid future access issues.
                  */
                 {
                     if (File.Exists(FeedFilePath) == false)
                     {
-                        RSSNetClient.CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
+                        ShouldCacheFileBeCreated = true;
                     }
                 }
+
                 /*
+                 * A cached file may not exist. 
                  * Indicates a situation where a feed table entry does not exist and no file exists.
                  *      That can happen during testing, development and modification of the system.
                  *      In all cases, re-do the local cache files. This will also trigger regeneration
                  *      of the feed table entry after the transformation/translation stage.
                  */
-                else if (File.Exists(FeedFilePath) == false)
+                if (ShouldCacheFileBeCreated)
                 {
                     RSSNetClient.CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
                 }
