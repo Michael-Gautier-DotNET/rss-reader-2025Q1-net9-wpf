@@ -1,0 +1,4 @@
+﻿Ars Technica	https://feeds.arstechnica.com/arstechnica/index
+Slashdot	http://rss.slashdot.org/Slashdot/slashdotMainatom
+Phoronix	https://www.phoronix.com/phoronix-rss.php
+DistroWatch	https://distrowatch.com/news/dw.xml
