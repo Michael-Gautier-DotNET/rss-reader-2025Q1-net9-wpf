@@ -421,9 +421,9 @@ public static class FeedDataExchange
 
     private static void ModifyFeedArticle(SQLiteConnection sqlConn, Feed feedHeader, FeedArticleUnion article)
     {
-        int RowCount = FeedArticleReader.CountRows(sqlConn, feedHeader.FeedName, article.ArticleDetail.ArticleUrl);
+        bool Exists = FeedArticleReader.Exists(sqlConn, feedHeader.FeedName, article.ArticleDetail.ArticleUrl);
 
-        if (RowCount == 0)
+        if (Exists)
         {
             FeedArticleWriter.AddFeedArticle(sqlConn, article);
         }
@@ -437,9 +437,9 @@ public static class FeedDataExchange
 
     private static void ModifyFeed(SQLiteConnection sqlConn, Feed feedHeader)
     {
-        int RowCount = FeedReader.CountRows(sqlConn, feedHeader.FeedName);
+        bool Exists = FeedReader.Exists(sqlConn, feedHeader.FeedName);
 
-        if (RowCount == 0)
+        if (Exists)
         {
             FeedWriter.AddFeed(sqlConn, feedHeader);
         }
