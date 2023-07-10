@@ -1,5 +1,4 @@
 ﻿using gautier.rss.data;
-using gautier.rss.data.RSSDb;
 
 namespace gautier.app.rss.feeddownloader
 {
@@ -13,11 +12,11 @@ namespace gautier.app.rss.feeddownloader
         {
             SetupFeedDirectory();
 
-            FeedFileConverter.CreateStaticFeedFiles(_FeedSaveDirectoryPath, _FeedInfos);
+            FeedFileConverter.CreateStaticFeedFiles(_FeedSaveDirectoryPath, _FeedDbFilePath, _FeedInfos);
 
             FeedFileConverter.TransformStaticFeedFiles(_FeedSaveDirectoryPath, _FeedInfos);
 
-            FeedDataExchange.ImportStaticFeedFilesToDatabase(_FeedSaveDirectoryPath, _FeedInfos, _FeedDbFilePath);
+            FeedDataExchange.ImportStaticFeedFilesToDatabase(_FeedSaveDirectoryPath, _FeedDbFilePath, _FeedInfos);
 
             return;
         }

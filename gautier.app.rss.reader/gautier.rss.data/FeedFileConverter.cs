@@ -10,7 +10,7 @@ namespace gautier.rss.data
         /// <summary>
         /// Designed to generate static local files even if they are later accidentally deleted.
         /// </summary>
-        public static void CreateStaticFeedFiles(string feedSaveDirectoryPath, Feed[] feedInfos)
+        public static void CreateStaticFeedFiles(string feedSaveDirectoryPath, string sqlDbConnectionString, Feed[] feedInfos)
         {
             foreach (var FeedInfo in feedInfos)
             {

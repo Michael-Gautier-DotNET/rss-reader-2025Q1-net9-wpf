@@ -251,7 +251,7 @@ public static class FeedDataExchange
         return feeds_articles;
     }
 
-    public static void ImportStaticFeedFilesToDatabase(string feedSaveDirectoryPath, Feed[] feedInfos, string connectionString)
+    public static void ImportStaticFeedFilesToDatabase(string feedSaveDirectoryPath, string sqlDbConnectionString, Feed[] feedInfos)
     {
         SortedList<string, List<FeedArticleUnion>> FeedsArticles = new();
 
@@ -323,7 +323,7 @@ public static class FeedDataExchange
             }
         }
 
-        WriteRSSArticlesToDatabase(connectionString, FeedsArticles);
+        WriteRSSArticlesToDatabase(sqlDbConnectionString, FeedsArticles);
 
         return;
     }
