@@ -5,55 +5,20 @@ namespace gautier.app.rss.feeddownloader
     internal class Program
     {
         private static readonly string _FeedSaveDirectoryPath = @"C:\RSSFeeds\";
-        private static readonly Feed[] _FeedInfos = GetStaticFeedInfos();
+        private static readonly string _FeedNamesFilePath = @"rss_feed_sources.txt";
         private static readonly string _FeedDbFilePath = @"rss.db";
 
         internal static void Main(string[] args)
         {
-            SetupFeedDirectory();
+            Feed[] FeedEntries = FeedFileConverter.GetStaticFeedInfos(_FeedNamesFilePath);
 
-            FeedFileConverter.CreateStaticFeedFiles(_FeedSaveDirectoryPath, _FeedDbFilePath, _FeedInfos);
+            FeedFileConverter.CreateStaticFeedFiles(_FeedSaveDirectoryPath, _FeedDbFilePath, FeedEntries);
 
-            FeedFileConverter.TransformStaticFeedFiles(_FeedSaveDirectoryPath, _FeedInfos);
+            FeedFileConverter.TransformStaticFeedFiles(_FeedSaveDirectoryPath, FeedEntries);
 
-            FeedDataExchange.ImportStaticFeedFilesToDatabase(_FeedSaveDirectoryPath, _FeedDbFilePath, _FeedInfos);
-
-            return;
-        }
-
-        private static void SetupFeedDirectory()
-        {
-            if (Directory.Exists(_FeedSaveDirectoryPath) == false)
-            {
-                Directory.CreateDirectory(_FeedSaveDirectoryPath);
-            }
+            FeedDataExchange.ImportStaticFeedFilesToDatabase(_FeedSaveDirectoryPath, _FeedDbFilePath, FeedEntries);
 
             return;
-        }
-
-        public static Feed[] GetStaticFeedInfos()
-        {
-            var FeedInfos = new Feed[]
-            {
-                new Feed{
-                    FeedName = "Ars Technica",
-                    FeedUrl = "https://feeds.arstechnica.com/arstechnica/index"
-                },
-                new Feed{
-                    FeedName = "Slashdot",//no more than once per 30 minutes
-                    FeedUrl = "http://rss.slashdot.org/Slashdot/slashdotMainatom"
-                },
-                new Feed{
-                    FeedName = "Phoronix",
-                    FeedUrl = "https://www.phoronix.com/phoronix-rss.php"
-                },
-                new Feed{
-                    FeedName = "DistroWatch",
-                    FeedUrl = "https://distrowatch.com/news/dw.xml"
-                }
-            };
-
-            return FeedInfos;
         }
     }
 }

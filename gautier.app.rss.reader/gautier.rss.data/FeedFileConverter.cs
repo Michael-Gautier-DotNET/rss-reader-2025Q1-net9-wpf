@@ -15,50 +15,65 @@ namespace gautier.rss.data
         /// </summary>
         public static void CreateStaticFeedFiles(string feedSaveDirectoryPath, string feedDbFilePath, Feed[] feedInfos)
         {
+            if (Directory.Exists(feedSaveDirectoryPath) == false)
+            {
+                Directory.CreateDirectory(feedSaveDirectoryPath);
+            }
+
             string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
 
             using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
 
+            /*
+             * At this point, in this version, the feed rows are statically fed through the software application.
+             * NOTE TO SELF ... change this to drive exclusively off "both" a simple configuration file and existing database.
+             *      In the future the way it will work is the program will look for the existence of an RSS database.
+             *          If one exists, then it will load the feed entries into memory and append any entries from a file
+             *            that does not already exist in the in-memory representation.
+             *          If an rss db in SQLite format does not exist, then it will be created. The file entries will 
+             *            populate the database (as it currently does in the late June/early July 2023 design).
+             *            
+             *          The primary focus of these design points is to assist future development and troubleshooting.
+             *          
+             *          The UI version of this program will not have these requirements since RSS feed configuration will be
+             *             driven by a UI screen and not subject to self-sustained start-up automation as is the case here.
+             */
             foreach (var FeedInfo in feedInfos)
             {
                 string FeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, FeedInfo);
 
-                if (File.Exists(FeedFilePath) == false)
-                {
-                    RSSNetClient.CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
-                }
                 /*
                  * VERY IMPORTANT
-                 *      This function is the central nexus that determines if the entire program
+                 *      This code path is the central nexus that determines if the entire program
                  *         is a naive implementation versus an actual RSS implementation.
                  *         Feeds should update at regular intervals without causing issues
                  *         related to accessing the source websites too often.
                  */
-                else
+                bool Exists = FeedReader.Exists(SQLConn, FeedInfo.FeedName);
+
+                if (Exists)
+                /*
+                 * Go into a complex logic cycle.
+                 *      The main goal is to update the feed based on the columns:
+                            "last_retrieved",
+                            "retrieve_limit_hrs",
+                            "retention_days"
+                 */
                 {
-                    bool Exists = FeedReader.Exists(SQLConn, FeedInfo.FeedName);
-
-                    if(Exists)
-                    /*
-                     * Go into a complex logic cycle.
-                     *      The main goal is to update the feed based on the columns:
-                                "last_retrieved",
-                                "retrieve_limit_hrs",
-                                "retention_days"
-                     */
+                    if (File.Exists(FeedFilePath) == false)
                     {
-
+                        RSSNetClient.CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
                     }
-                    /*
-                     * Indicates a situation where the file exists but the table entry was deleted.
-                     *      That can happen during testing, development and modification of the system.
-                     *      In rare instances, the database had to be wiped out and and re-established from 
-                     *      local cache files.
-                     */
-                    else
-                    {
-
-                    }
+                }
+                /*
+                 * Indicates a situation where a feed table entry does not exist and no file exists.
+                 *      That can happen during testing, development and modification of the system.
+                 *      In all cases, re-do the local cache files. This will also trigger regeneration
+                 *      of the feed table entry after the transformation/translation stage.
+                 */
+                else if (File.Exists(FeedFilePath) == false)
+                {
+                    RSSNetClient.CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
                 }
             }
 
@@ -214,6 +229,55 @@ namespace gautier.rss.data
         private static string GetNormalizedFeedFilePath(string feedSaveDirectoryPath, Feed feedInfo)
         {
             return Path.Combine(feedSaveDirectoryPath, $"{feedInfo.FeedName}.txt");
+        }
+
+        public static Feed[] GetStaticFeedInfos(string feedsFilePath)
+        {
+            List<Feed> Feeds = new();
+
+            SortedList<string, string> FeedByName = new();
+
+            using (StreamReader FeedsReader = new(feedsFilePath))
+            {
+                while (FeedsReader.EndOfStream == false)
+                {
+                    string FeedLine = $"{FeedsReader.ReadLine()}";
+
+                    if (string.IsNullOrWhiteSpace(FeedLine))
+                    {
+                        continue;
+                    }
+
+                    string[] Columns = FeedLine.Split(_Tab);
+
+                    if (Columns.Length < 1)
+                    {
+                        continue;
+                    }
+
+                    string FeedName = Columns[0];
+                    string FeedUrl = Columns[1];
+
+                    /*
+                     * If there are duplicate feed entries, the structure of the collection
+                     *   is defined such that the most recent entry prevails.
+                     */
+                    FeedByName[FeedName] = FeedUrl;
+                }
+            }
+
+            foreach (string FeedName in FeedByName.Keys)
+            {
+                Feed FeedEntry = new()
+                {
+                    FeedName = FeedName,
+                    FeedUrl = FeedByName[FeedName]
+                };
+
+                Feeds.Add(FeedEntry);
+            }
+
+            return Feeds.ToArray();
         }
     }
 }
