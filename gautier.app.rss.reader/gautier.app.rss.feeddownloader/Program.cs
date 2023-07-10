@@ -12,6 +12,10 @@ namespace gautier.app.rss.feeddownloader
         {
             Feed[] FeedEntries = FeedFileConverter.GetStaticFeedInfos(_FeedNamesFilePath);
 
+            /*
+             * Will definitely need a function to merge static feed entries with those in the database.
+             */
+
             FeedFileConverter.CreateStaticFeedFiles(_FeedSaveDirectoryPath, _FeedDbFilePath, FeedEntries);
 
             FeedFileConverter.TransformStaticFeedFiles(_FeedSaveDirectoryPath, FeedEntries);

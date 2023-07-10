@@ -48,6 +48,9 @@ namespace gautier.rss.data
                  *         is a naive implementation versus an actual RSS implementation.
                  *         Feeds should update at regular intervals without causing issues
                  *         related to accessing the source websites too often.
+                 *  
+                 *  Shortcut:  The upstream input should have modified the in-memory
+                 *      representation of the feed entry to contain the relevant flags.
                  */
                 bool Exists = FeedReader.Exists(SQLConn, FeedInfo.FeedName);
 
