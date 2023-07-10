@@ -5,6 +5,7 @@ namespace gautier.rss.data.RSSDb
     public class FeedArticleReader
     {
         private static readonly string _TableName = "feeds_articles";
+        public static string TableName => _TableName;
 
         public static int GetFeedArticleCount(SQLiteConnection sqlConn)
         {
@@ -51,6 +52,58 @@ namespace gautier.rss.data.RSSDb
             }
 
             return Count;
+        }
+
+        internal static void CreateFeedArticleParameters(SQLiteCommand SQLCmd, FeedArticle article, string[] columnNames)
+        {
+            foreach (var ColumnName in columnNames)
+            {
+                string ParamName = $"@{ColumnName}";
+                string ParamValue = string.Empty;
+
+                switch (ColumnName)
+                {
+                    case "feed_name":
+                        ParamValue = $"{article.FeedName}";
+                        break;
+                    case "headline_text":
+                        ParamValue = $"{article.HeadlineText}";
+                        break;
+                    case "article_summary":
+                        ParamValue = $"{article.ArticleSummary}";
+                        break;
+                    case "article_text":
+                        ParamValue = $"{article.ArticleText}";
+                        break;
+                    case "article_date":
+                        ParamValue = $"{article.ArticleDate}";
+                        break;
+                    case "article_url":
+                        ParamValue = $"{article.ArticleUrl}";
+                        break;
+                    case "row_insert_date_time":
+                        ParamValue = $"{article.RowInsertDateTime}";
+                        break;
+                }
+
+                SQLCmd.Parameters.AddWithValue(ParamName, ParamValue);
+            }
+
+            return;
+        }
+
+        internal static string[] GetSQLFeedsArticlesColumnNames()
+        {
+            return new string[]
+            {
+            "feed_name",
+            "headline_text",
+            "article_summary",
+            "article_text",
+            "article_date",
+            "article_url",
+            "row_insert_date_time"
+            };
         }
     }
 }
