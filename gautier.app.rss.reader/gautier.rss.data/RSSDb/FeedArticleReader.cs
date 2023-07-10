@@ -92,18 +92,21 @@ namespace gautier.rss.data.RSSDb
             return;
         }
 
-        internal static string[] GetSQLFeedsArticlesColumnNames()
+        internal static string[] TableColumnNames
         {
-            return new string[]
+            get
             {
-            "feed_name",
-            "headline_text",
-            "article_summary",
-            "article_text",
-            "article_date",
-            "article_url",
-            "row_insert_date_time"
-            };
+                return new string[]
+                {
+                    "feed_name",
+                    "headline_text",
+                    "article_summary",
+                    "article_text",
+                    "article_date",
+                    "article_url",
+                    "row_insert_date_time"
+                };
+            }
         }
     }
 }

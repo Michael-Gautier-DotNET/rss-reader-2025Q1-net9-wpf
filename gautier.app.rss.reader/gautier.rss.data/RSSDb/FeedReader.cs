@@ -69,16 +69,19 @@ namespace gautier.rss.data.RSSDb
             return;
         }
 
-        internal static string[] GetSQLFeedsColumnNames()
+        internal static string[] TableColumnNames
         {
-            return new string[]
+            get
             {
-            "feed_name",
-            "feed_url",
-            "last_retrieved",
-            "retrieve_limit_hrs",
-            "retention_days"
-            };
+                return new string[]
+                {
+                    "feed_name",
+                    "feed_url",
+                    "last_retrieved",
+                    "retrieve_limit_hrs",
+                    "retention_days"
+                };
+            }
         }
     }
 }

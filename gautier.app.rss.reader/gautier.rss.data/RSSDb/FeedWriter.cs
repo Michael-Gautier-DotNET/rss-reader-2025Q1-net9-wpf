@@ -5,7 +5,7 @@ namespace gautier.rss.data.RSSDb
 {
     internal class FeedWriter
     {
-        private static readonly string[] _ColumnNames = FeedReader.GetSQLFeedsColumnNames();
+        private static readonly string[] _ColumnNames = FeedReader.TableColumnNames();
 
         internal static void AddFeed(SQLiteConnection sqlConn, Feed feedHeader)
         {
