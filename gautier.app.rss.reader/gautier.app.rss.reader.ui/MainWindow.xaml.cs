@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 
 using gautier.rss.data;
+using gautier.rss.data.RSSDb;
 
 namespace gautier.app.rss.reader.ui
 {
@@ -14,6 +15,9 @@ namespace gautier.app.rss.reader.ui
     /// </summary>
     public partial class MainWindow : Window
     {
+        private static readonly string _FeedDbFilePath = @"C:\RSSFeeds\feeds_db\rss.db";
+        private static readonly string SQLiteDbConnectionString = SQLUtil.GetSQLiteConnectionString(_FeedDbFilePath, 3);
+
         private TabControl reader_tabs = new()
         {
             Background = Brushes.Orange,
@@ -58,7 +62,7 @@ namespace gautier.app.rss.reader.ui
 
         private void WindowInitializationTask_DoWork(object sender, DoWorkEventArgs e)
         {
-            feeds = FeedDataExchange.GetAllFeeds(Properties.Settings.Default.rss_connection_string_sqlserver);
+            feeds = FeedDataExchange.GetAllFeeds(SQLiteDbConnectionString);
 
             feed_index = feeds.Count > -1 ? 0 : -1;
 
@@ -193,7 +197,12 @@ namespace gautier.app.rss.reader.ui
         {
             this.article = article;
 
-            var article_text = article?.ArticleText ?? empty_article;
+            string article_text = empty_article;
+
+            if (string.IsNullOrWhiteSpace(article?.ArticleSummary) == false)
+            {
+                article_text = article?.ArticleSummary;
+            }
 
             reader_headline.Text = article?.HeadlineText ?? string.Empty;
             reader_article.NavigateToString(article_text);
@@ -218,7 +227,7 @@ namespace gautier.app.rss.reader.ui
 
                 if (FeedHeadlines != null && FeedHeadlines.HasItems == false)
                 {
-                    feeds_articles = FeedDataExchange.GetFeedArticles(Properties.Settings.Default.rss_connection_string_sqlserver, feed_name);
+                    feeds_articles = FeedDataExchange.GetFeedArticles(SQLiteDbConnectionString, feed_name);
 
                     var indexed_feed_articles = feeds_articles.Values;
 
