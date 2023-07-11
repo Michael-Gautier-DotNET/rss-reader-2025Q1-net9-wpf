@@ -88,7 +88,7 @@ namespace gautier.rss.data.RSSDb
 
         public static List<Feed> GetAllRows(SQLiteConnection sqlConn)
         {
-            List<Feed> Feeds = new();
+            List<Feed> Rows = new();
 
             string CommandText = $"SELECT * FROM {_TableName};";
 
@@ -110,7 +110,6 @@ namespace gautier.rss.data.RSSDb
                         {
                             object ColValue = SQLRowReader.GetValue(ColI);
 
-                            //Assume all is text/string.
                             switch (ColI)
                             {
                                 case 0: //feed_name
@@ -140,12 +139,12 @@ namespace gautier.rss.data.RSSDb
                             RetentionDays = RetentionDays
                         };
 
-                        Feeds.Add(FeedEntry);
+                        Rows.Add(FeedEntry);
                     }
                 }
             }
 
-            return Feeds;
+            return Rows;
         }
     }
 }
