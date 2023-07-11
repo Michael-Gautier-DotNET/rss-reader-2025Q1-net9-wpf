@@ -1,4 +1,5 @@
 ﻿using System.Data.SQLite;
+using System.Globalization;
 using System.ServiceModel.Syndication;
 using System.Text;
 
@@ -9,6 +10,8 @@ namespace gautier.rss.data
     public static class FeedFileConverter
     {
         private const char _Tab = '\t';
+
+        private static readonly DateTimeFormatInfo _InvariantFormat = DateTimeFormatInfo.InvariantInfo;
 
         /// <summary>
         /// Designed to generate static local files even if they are later accidentally deleted.
@@ -70,8 +73,7 @@ namespace gautier.rss.data
                  * Go into a complex logic cycle.
                  *      The main goal is to access the feed based on the columns:
                             "last_retrieved",
-                            "retrieve_limit_hrs",
-                            "retention_days"
+                            "retrieve_limit_hrs"
 
                     Remember to set the ShouldCacheFileBeCreated = false when
                         there is an indication a feed website was recently accessed.
@@ -79,9 +81,22 @@ namespace gautier.rss.data
                     that situation must still be respected to avoid future access issues.
                  */
                 {
-                    if (File.Exists(FeedFilePath) == false)
+                    DateTime RecentDateTime = DateTime.Now;
+
+                    int RetrieveLimitHrs;
+                    int.TryParse(FeedInfo.RetrieveLimitHrs, out RetrieveLimitHrs);
+
+                    DateTime LastRetrievedDateTime;
+                    DateTime.TryParseExact(FeedInfo.LastRetrieved, _InvariantFormat.UniversalSortableDateTimePattern, _InvariantFormat, DateTimeStyles.None, out LastRetrievedDateTime);
+
+                    DateTime FeedRenewalDateTime = LastRetrievedDateTime.AddHours(RetrieveLimitHrs);
+
+                    if (RecentDateTime > FeedRenewalDateTime)
                     {
-                        ShouldCacheFileBeCreated = true;
+                        if (File.Exists(FeedFilePath) == false)
+                        {
+                            ShouldCacheFileBeCreated = true;
+                        }
                     }
                 }
 
@@ -228,7 +243,7 @@ namespace gautier.rss.data
                 ArticleDate = syndicate.LastUpdatedTime.LocalDateTime;
             }
 
-            string ArticleDateText = ArticleDate.ToString("MM/dd/yyyy hh:mm tt");
+            string ArticleDateText = ArticleDate.ToString(_InvariantFormat.UniversalSortableDateTimePattern);
 
             return new FeedArticle
             {
@@ -238,7 +253,7 @@ namespace gautier.rss.data
                 ArticleText = ArticleText,
                 ArticleDate = ArticleDateText,
                 ArticleUrl = ArticleUrl,
-                RowInsertDateTime = DateTime.Now.ToString()
+                RowInsertDateTime = DateTime.Now.ToString(_InvariantFormat.UniversalSortableDateTimePattern)
             };
         }
 
