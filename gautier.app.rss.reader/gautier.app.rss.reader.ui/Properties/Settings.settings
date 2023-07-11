@@ -1,36 +1,5 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="gautier.app.rss.reader.ui.Properties" GeneratedClassName="Settings">
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)">
   <Profiles />
-  <Settings>
-    <Setting Name="rss_connection_string_sqlserver" Type="(Connection string)" Scope="Application">
-      <DesignTimeValue Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
-&lt;SerializableConnectionString xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
-  &lt;ConnectionString&gt;Data Source=.;Initial Catalog=rss_data;Integrated Security=True;Trust Server Certificate=True;Application Name=GautierRSSClient&lt;/ConnectionString&gt;
-  &lt;ProviderName&gt;System.Data.SqlClient&lt;/ProviderName&gt;
-&lt;/SerializableConnectionString&gt;</DesignTimeValue>
-      <Value Profile="(Default)">Data Source=.;Initial Catalog=rss_data;Integrated Security=True;Trust Server Certificate=True;Application Name=GautierRSSClient</Value>
-    </Setting>
-    <Setting Name="feeds_articles_column_names" Type="System.Collections.Specialized.StringCollection" Scope="Application">
-      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
-&lt;ArrayOfString xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
-  &lt;string&gt;feed_name&lt;/string&gt;
-  &lt;string&gt;headline_text&lt;/string&gt;
-  &lt;string&gt;article_summary&lt;/string&gt;
-  &lt;string&gt;article_text&lt;/string&gt;
-  &lt;string&gt;article_date&lt;/string&gt;
-  &lt;string&gt;article_url&lt;/string&gt;
-  &lt;string&gt;row_insert_date_time&lt;/string&gt;
-&lt;/ArrayOfString&gt;</Value>
-    </Setting>
-    <Setting Name="feeds_column_names" Type="System.Collections.Specialized.StringCollection" Scope="Application">
-      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
-&lt;ArrayOfString xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
-  &lt;string&gt;feed_name&lt;/string&gt;
-  &lt;string&gt;feed_url&lt;/string&gt;
-  &lt;string&gt;last_retrieved&lt;/string&gt;
-  &lt;string&gt;retrieve_limit_hrs&lt;/string&gt;
-  &lt;string&gt;retention_days&lt;/string&gt;
-&lt;/ArrayOfString&gt;</Value>
-    </Setting>
-  </Settings>
+  <Settings />
 </SettingsFile>
