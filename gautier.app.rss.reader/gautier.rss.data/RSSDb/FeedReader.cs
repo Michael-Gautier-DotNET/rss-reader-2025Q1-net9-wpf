@@ -54,7 +54,7 @@ namespace gautier.rss.data.RSSDb
             return Count > 0;
         }
 
-        internal static void MapSQLParametersToAllTableColumns(SQLiteCommand SQLCmd, Feed FeedHeader, string[] columnNames)
+        internal static void MapSQLParametersToAllTableColumns(SQLiteCommand cmd, Feed FeedHeader, string[] columnNames)
         {
             foreach (var ColumnName in columnNames)
             {
@@ -80,7 +80,7 @@ namespace gautier.rss.data.RSSDb
                         break;
                 }
 
-                SQLCmd.Parameters.AddWithValue(ParamName, ParamValue);
+                cmd.Parameters.AddWithValue(ParamName, ParamValue);
             }
 
             return;
