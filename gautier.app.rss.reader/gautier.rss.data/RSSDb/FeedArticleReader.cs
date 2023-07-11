@@ -22,11 +22,11 @@ namespace gautier.rss.data.RSSDb
         {
             int Count = 0;
 
-            string RowCheckCommandText = $"SELECT COUNT(*) FROM {_TableName};";
+            string CommandText = $"SELECT COUNT(*) FROM {_TableName};";
 
-            using (SQLiteCommand RowCheckSQLCmd = new(RowCheckCommandText, sqlConn))
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
             {
-                Count = Convert.ToInt32(RowCheckSQLCmd.ExecuteScalar());
+                Count = Convert.ToInt32(SQLCmd.ExecuteScalar());
             }
 
             return Count;
@@ -36,13 +36,13 @@ namespace gautier.rss.data.RSSDb
         {
             int Count = 0;
 
-            string RowCheckCommandText = $"SELECT COUNT(*) FROM {_TableName} WHERE feed_name = @FeedName;";
+            string CommandText = $"SELECT COUNT(*) FROM {_TableName} WHERE feed_name = @FeedName;";
 
-            using (SQLiteCommand RowCheckSQLCmd = new(RowCheckCommandText, sqlConn))
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
             {
-                RowCheckSQLCmd.Parameters.AddWithValue("@FeedName", feedName);
+                SQLCmd.Parameters.AddWithValue("@FeedName", feedName);
 
-                Count = Convert.ToInt32(RowCheckSQLCmd.ExecuteScalar());
+                Count = Convert.ToInt32(SQLCmd.ExecuteScalar());
             }
 
             return Count;
@@ -52,14 +52,14 @@ namespace gautier.rss.data.RSSDb
         {
             int Count = 0;
 
-            string RowCheckCommandText = $"SELECT COUNT(*) FROM {_TableName} WHERE feed_name = @FeedName AND article_url = @ArticleUrl;";
+            string CommandText = $"SELECT COUNT(*) FROM {_TableName} WHERE feed_name = @FeedName AND article_url = @ArticleUrl;";
 
-            using (SQLiteCommand RowCheckSQLCmd = new(RowCheckCommandText, sqlConn))
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
             {
-                RowCheckSQLCmd.Parameters.AddWithValue("@FeedName", feedName);
-                RowCheckSQLCmd.Parameters.AddWithValue("@ArticleUrl", articleUrl);
+                SQLCmd.Parameters.AddWithValue("@FeedName", feedName);
+                SQLCmd.Parameters.AddWithValue("@ArticleUrl", articleUrl);
 
-                Count = Convert.ToInt32(RowCheckSQLCmd.ExecuteScalar());
+                Count = Convert.ToInt32(SQLCmd.ExecuteScalar());
             }
 
             return Count;

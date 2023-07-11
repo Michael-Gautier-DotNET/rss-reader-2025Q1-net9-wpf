@@ -11,72 +11,19 @@ public static class FeedDataExchange
 
     public static SortedList<string, Feed> GetAllFeeds(string sqlConnectionString)
     {
-        var feeds = new SortedList<string, Feed>();
+        var Feeds = new SortedList<string, Feed>();
 
-        using (var sql_conn = new SQLiteConnection(sqlConnectionString))
+        using (SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(sqlConnectionString))
         {
-            sql_conn.Open();
+            var FeedEntries = FeedReader.GetAllRows(SQLConn);
 
-            using (var sql_com = sql_conn.CreateCommand())
+            foreach (var FeedEntry in FeedEntries)
             {
-                sql_com.CommandType = CommandType.StoredProcedure;
-                sql_com.CommandText = "get_all_feeds";
-
-                using (var col_reader = sql_com.ExecuteReader())
-                {
-                    var col_count = col_reader.FieldCount;
-
-                    while (col_reader.Read())
-                    {
-                        var FeedName = string.Empty;
-                        var FeedUrl = string.Empty;
-                        var LastRetrieved = string.Empty;
-                        var RetrieveLimitHrs = string.Empty;
-                        var RetentionDays = string.Empty;
-
-                        for (var col_index = 0; col_index < col_count; col_index++)
-                        {
-                            var col_value = col_reader.GetString(col_index);
-                            //Assume all is text/string.
-                            switch (col_index)
-                            {
-                                case 0: //feed_name
-                                    FeedName = col_value;
-                                    break;
-                                case 1://feed_url
-                                    FeedUrl = col_value;
-                                    break;
-                                case 2://last_retrieved
-                                    LastRetrieved = col_value;
-                                    break;
-                                case 3://retrieve_limit_hrs
-                                    RetrieveLimitHrs = col_value;
-                                    break;
-                                case 4://retention_days
-                                    RetentionDays = col_value;
-                                    break;
-                            }
-                        }
-
-                        if (!feeds.ContainsKey(FeedName))
-                        {
-                            Feed feed_item = new Feed
-                            {
-                                FeedName = FeedName,
-                                FeedUrl = FeedUrl,
-                                LastRetrieved = LastRetrieved,
-                                RetrieveLimitHrs = RetrieveLimitHrs,
-                                RetentionDays = RetentionDays
-                            };
-
-                            feeds.Add(FeedName, feed_item);
-                        }
-                    }
-                }
+                Feeds[FeedEntry.FeedName] = FeedEntry;
             }
         }
 
-        return feeds;
+        return Feeds;
     }
 
     public static SortedList<string, SortedList<string, FeedArticle>> GetAllFeedArticles(string sqlConnectionString)
@@ -446,6 +393,72 @@ public static class FeedDataExchange
         else
         {
             FeedWriter.ModifyFeed(sqlConn, feedHeader);
+        }
+
+        return;
+    }
+
+    public static Feed[] MergeFeedEntries(string feedDbFilePath, Feed[] feedEntries)
+    {
+        string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
+
+        using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
+
+        List<string> FeedUrls = new();
+
+        List<Feed> StaticFeedEntries = new(feedEntries);
+        List<Feed> FeedEntries = FeedReader.GetAllRows(SQLConn);
+
+        /*Feed entries from the database.*/
+        MergeValidateFeedEntries(FeedEntries, StaticFeedEntries, FeedUrls);
+
+        /*Feed entries from the file.*/
+        MergeValidateFeedEntries(StaticFeedEntries, FeedEntries, FeedUrls);
+
+        return FeedEntries.ToArray();
+    }
+
+    private static void MergeValidateFeedEntries(List<Feed> leftSideValues, List<Feed> rightSideValues, List<string> secondKeys)
+    {
+        foreach (Feed LeftEntry in leftSideValues)
+        {
+            string SecondKey = LeftEntry.FeedUrl.ToLower();
+
+            if (secondKeys.Contains(SecondKey))
+            {
+                continue;
+            }
+            else
+            {
+                secondKeys.Add(SecondKey);
+            }
+
+            /*Feed entries from the file.*/
+            foreach (Feed RightSideEntry in rightSideValues)
+            {
+                if (LeftEntry.FeedName == RightSideEntry.FeedName)
+                {
+                    string RightSideSecondKey = RightSideEntry.FeedUrl.ToLower();
+
+                    if (SecondKey != RightSideSecondKey && secondKeys.Contains(RightSideSecondKey) == false)
+                    {
+                        /*
+                         * Give another feed the opportunity to use the url under a different feed name.
+                         * I do not really support this functionality but I am annotating the concept regardless.
+                         */
+                        secondKeys.Remove(RightSideSecondKey);
+
+                        /*
+                         * For now, assume the url from the secondary source is more current.
+                         *      In the future, 
+                         *          may want to compare the 
+                         *              file's last modifed time to the data record's last retrieved time.
+                         */
+                        LeftEntry.FeedUrl = RightSideSecondKey;
+                        secondKeys.Add(RightSideSecondKey);
+                    }
+                }
+            }
         }
 
         return;

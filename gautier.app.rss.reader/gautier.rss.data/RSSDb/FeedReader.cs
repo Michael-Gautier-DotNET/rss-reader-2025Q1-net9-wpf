@@ -1,4 +1,5 @@
-﻿using System.Data.SQLite;
+﻿using System.Data;
+using System.Data.SQLite;
 
 namespace gautier.rss.data.RSSDb
 {
@@ -20,11 +21,11 @@ namespace gautier.rss.data.RSSDb
         {
             int Count = 0;
 
-            string RowCheckCommandText = $"SELECT COUNT(*) FROM {_TableName};";
+            string CommandText = $"SELECT COUNT(*) FROM {_TableName};";
 
-            using (SQLiteCommand RowCheckSQLCmd = new(RowCheckCommandText, sqlConn))
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
             {
-                Count = Convert.ToInt32(RowCheckSQLCmd.ExecuteScalar());
+                Count = Convert.ToInt32(SQLCmd.ExecuteScalar());
             }
 
             return Count;
@@ -34,13 +35,13 @@ namespace gautier.rss.data.RSSDb
         {
             int Count = 0;
 
-            string RowCheckCommandText = $"SELECT COUNT(*) FROM {_TableName} WHERE feed_name = @FeedName;";
+            string CommandText = $"SELECT COUNT(*) FROM {_TableName} WHERE feed_name = @FeedName;";
 
-            using (SQLiteCommand RowCheckSQLCmd = new(RowCheckCommandText, sqlConn))
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
             {
-                RowCheckSQLCmd.Parameters.AddWithValue("@FeedName", feedName);
+                SQLCmd.Parameters.AddWithValue("@FeedName", feedName);
 
-                Count = Convert.ToInt32(RowCheckSQLCmd.ExecuteScalar());
+                Count = Convert.ToInt32(SQLCmd.ExecuteScalar());
             }
 
             return Count;
@@ -83,6 +84,68 @@ namespace gautier.rss.data.RSSDb
             }
 
             return;
+        }
+
+        public static List<Feed> GetAllRows(SQLiteConnection sqlConn)
+        {
+            List<Feed> Feeds = new();
+
+            string CommandText = $"SELECT * FROM {_TableName};";
+
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
+            {
+                using (SQLiteDataReader SQLRowReader = SQLCmd.ExecuteReader())
+                {
+                    int ColCount = SQLRowReader.FieldCount;
+
+                    while (SQLRowReader.Read())
+                    {
+                        string FeedName = string.Empty;
+                        string FeedUrl = string.Empty;
+                        string LastRetrieved = string.Empty;
+                        string RetrieveLimitHrs = string.Empty;
+                        string RetentionDays = string.Empty;
+
+                        for (int ColI = 0; ColI < ColCount; ColI++)
+                        {
+                            object ColValue = SQLRowReader.GetValue(ColI);
+
+                            //Assume all is text/string.
+                            switch (ColI)
+                            {
+                                case 0: //feed_name
+                                    FeedName = $"{ColValue}";
+                                    break;
+                                case 1://feed_url
+                                    FeedUrl = $"{ColValue}";
+                                    break;
+                                case 2://last_retrieved
+                                    LastRetrieved = $"{ColValue}";
+                                    break;
+                                case 3://retrieve_limit_hrs
+                                    RetrieveLimitHrs = $"{ColValue}";
+                                    break;
+                                case 4://retention_days
+                                    RetentionDays = $"{ColValue}";
+                                    break;
+                            }
+                        }
+
+                        Feed FeedEntry = new Feed
+                        {
+                            FeedName = FeedName,
+                            FeedUrl = FeedUrl,
+                            LastRetrieved = LastRetrieved,
+                            RetrieveLimitHrs = RetrieveLimitHrs,
+                            RetentionDays = RetentionDays
+                        };
+
+                        Feeds.Add(FeedEntry);
+                    }
+                }
+            }
+
+            return Feeds;
         }
     }
 }
