@@ -79,7 +79,7 @@ namespace gautier.rss.data.RSSDb
             return Count > 0;
         }
 
-        internal static void MapSQLParametersToAllTableColumns(SQLiteCommand SQLCmd, FeedArticle article, string[] columnNames)
+        internal static void MapSQLParametersToAllTableColumns(SQLiteCommand cmd, FeedArticle article, string[] columnNames)
         {
             foreach (var ColumnName in columnNames)
             {
@@ -111,7 +111,104 @@ namespace gautier.rss.data.RSSDb
                         break;
                 }
 
-                SQLCmd.Parameters.AddWithValue(ParamName, ParamValue);
+                cmd.Parameters.AddWithValue(ParamName, ParamValue);
+            }
+
+            return;
+        }
+
+        public static List<FeedArticle> GetAllRows(SQLiteConnection sqlConn)
+        {
+            List<FeedArticle> Rows = new();
+
+            string CommandText = $"SELECT * FROM {_TableName};";
+
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
+            {
+                using (SQLiteDataReader SQLRowReader = SQLCmd.ExecuteReader())
+                {
+                    CollectRows(SQLRowReader, Rows);
+                }
+            }
+
+            return Rows;
+        }
+
+        public static List<FeedArticle> GetRows(SQLiteConnection sqlConn, string feedName)
+        {
+            List<FeedArticle> Rows = new();
+
+            string CommandText = $"SELECT * FROM {_TableName} WHERE feed_name = @FeedName;";
+
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
+            {
+                SQLCmd.Parameters.AddWithValue("@FeedName", feedName);
+
+                using (SQLiteDataReader SQLRowReader = SQLCmd.ExecuteReader())
+                {
+                    CollectRows(SQLRowReader, Rows);
+                }
+            }
+
+            return Rows;
+        }
+
+        private static void CollectRows(SQLiteDataReader reader, List<FeedArticle> rows)
+        {
+            int ColCount = reader.FieldCount;
+
+            while (reader.Read())
+            {
+                var FeedName = string.Empty;
+                var HeadlineText = string.Empty;
+                var ArticleSummary = string.Empty;
+                var ArticleText = string.Empty;
+                var ArticleDate = string.Empty;
+                var ArticleUrl = string.Empty;
+                var RowInsertDateTime = string.Empty;
+
+                for (var ColI = 0; ColI < ColCount; ColI++)
+                {
+                    object ColValue = reader.GetValue(ColI);
+
+                    switch (ColI)
+                    {
+                        case 0: //feed_name
+                            FeedName = $"{ColValue}";
+                            break;
+                        case 1://headline_text
+                            HeadlineText = $"{ColValue}";
+                            break;
+                        case 2://article_summary
+                            ArticleSummary = $"{ColValue}";
+                            break;
+                        case 3://article_text
+                            ArticleText = $"{ColValue}";
+                            break;
+                        case 4://article_date
+                            ArticleDate = $"{ColValue}";
+                            break;
+                        case 5://article_url
+                            ArticleUrl = $"{ColValue}";
+                            break;
+                        case 6://row_insert_date_time
+                            RowInsertDateTime = $"{ColValue}";
+                            break;
+                    }
+                }
+
+                FeedArticle FeedEntry = new()
+                {
+                    FeedName = FeedName,
+                    HeadlineText = HeadlineText,
+                    ArticleSummary = ArticleSummary,
+                    ArticleText = ArticleText,
+                    ArticleDate = ArticleDate,
+                    ArticleUrl = ArticleUrl,
+                    RowInsertDateTime = RowInsertDateTime
+                };
+
+                rows.Add(FeedEntry);
             }
 
             return;
