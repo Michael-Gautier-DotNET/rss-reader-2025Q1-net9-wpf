@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Data.SQLite;
+using System.Globalization;
 
 using gautier.rss.data.RSSDb;
 
@@ -8,6 +9,8 @@ namespace gautier.rss.data;
 public static class FeedDataExchange
 {
     private const char _Tab = '\t';
+
+    private static readonly DateTimeFormatInfo _InvariantFormat = DateTimeFormatInfo.InvariantInfo;
 
     public static SortedList<string, Feed> GetAllFeeds(string sqlConnectionString)
     {
@@ -203,7 +206,7 @@ public static class FeedDataExchange
         SortedList<string, List<FeedArticleUnion>> FeedsArticles = new();
 
         DateTime ModificationDateTime = DateTime.Now;
-        string ModificationDateTimeText = ModificationDateTime.ToString();
+        string ModificationDateTimeText = ModificationDateTime.ToString(_InvariantFormat.UniversalSortableDateTimePattern);
 
         foreach (Feed FeedHeader in feedInfos)
         {
@@ -250,7 +253,10 @@ public static class FeedDataExchange
                         FeedArticlePair = new FeedArticleUnion
                         {
                             FeedHeader = FeedHeader,
-                            ArticleDetail = new FeedArticle()
+                            ArticleDetail = new FeedArticle
+                            {
+                                FeedName = FeedHeader.FeedName
+                            }
                         };
 
                         FeedArticlePair.ArticleDetail.RowInsertDateTime = ModificationDateTimeText;
@@ -409,11 +415,18 @@ public static class FeedDataExchange
         List<Feed> StaticFeedEntries = new(feedEntries);
         List<Feed> FeedEntries = FeedReader.GetAllRows(SQLConn);
 
-        /*Feed entries from the database.*/
-        MergeValidateFeedEntries(FeedEntries, StaticFeedEntries, FeedUrls);
+        if (FeedEntries.Count > 0)
+        {
+            /*Feed entries from the database.*/
+            MergeValidateFeedEntries(FeedEntries, StaticFeedEntries, FeedUrls);
 
-        /*Feed entries from the file.*/
-        MergeValidateFeedEntries(StaticFeedEntries, FeedEntries, FeedUrls);
+            /*Feed entries from the file.*/
+            MergeValidateFeedEntries(StaticFeedEntries, FeedEntries, FeedUrls);
+        }
+        else
+        {
+            FeedEntries = StaticFeedEntries;
+        }
 
         return FeedEntries.ToArray();
     }
