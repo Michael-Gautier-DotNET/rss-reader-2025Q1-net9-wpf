@@ -370,7 +370,7 @@ public static class FeedDataExchange
     {
         bool Exists = FeedArticleReader.Exists(sqlConn, feedHeader.FeedName, article.ArticleDetail.ArticleUrl);
 
-        if (Exists)
+        if (Exists == false)
         {
             FeedArticleWriter.AddFeedArticle(sqlConn, article);
         }
@@ -386,7 +386,7 @@ public static class FeedDataExchange
     {
         bool Exists = FeedReader.Exists(sqlConn, feedHeader.FeedName);
 
-        if (Exists)
+        if (Exists == false)
         {
             FeedWriter.AddFeed(sqlConn, feedHeader);
         }
