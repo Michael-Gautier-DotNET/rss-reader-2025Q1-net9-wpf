@@ -17,8 +17,11 @@ namespace gautier.app.rss.dbvisualizer.cli
 
             foreach(string FeedName in RSSFeedNames)
             {
-                Console.WriteLine($"Feed:\t{FeedName}");
+                Feed FeedEntry = RSSFeeds[FeedName];
 
+                Console.WriteLine($"Feed:\t{FeedName}");
+                Console.WriteLine($"\t\tLast Retrieved {FeedEntry.LastRetrieved} from {FeedEntry.FeedUrl}");
+                Console.WriteLine($"\t\t\tConfiguration: Retrieve Limit Hrs {FeedEntry.RetrieveLimitHrs}, Retention Days {FeedEntry.RetentionDays}");
                 /*
                  * Output article information.
                  */
