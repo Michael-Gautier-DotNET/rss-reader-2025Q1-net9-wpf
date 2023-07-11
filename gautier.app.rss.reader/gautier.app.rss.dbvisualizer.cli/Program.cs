@@ -25,6 +25,20 @@ namespace gautier.app.rss.dbvisualizer.cli
                 /*
                  * Output article information.
                  */
+
+                SortedList<string, FeedArticle> Articles = FeedDataExchange.GetFeedArticles(SQLiteDbConnectionString, FeedName);
+
+                List<string> ArticleUrls = new(Articles.Keys);
+
+                foreach(string ArticleUrl in ArticleUrls)
+                {
+                    FeedArticle Article = Articles[ArticleUrl];
+
+                    Console.WriteLine($"URL: {ArticleUrl}");
+                    Console.WriteLine($"\t\tHeadline: {Article.HeadlineText}");
+                    Console.WriteLine($"\t\t\t\tText: {Article.ArticleSummary}");
+                    Console.WriteLine($"\n\n\n");
+                }
             }
 
             return;
