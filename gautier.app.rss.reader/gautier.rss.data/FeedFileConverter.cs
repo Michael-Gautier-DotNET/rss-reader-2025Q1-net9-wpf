@@ -1,8 +1,10 @@
 ﻿using System.Data.SQLite;
+using System.Diagnostics;
 using System.Globalization;
 using System.ServiceModel.Syndication;
 using System.Text;
 
+using gautier.rss.data.FeedXml;
 using gautier.rss.data.RSSDb;
 
 namespace gautier.rss.data
@@ -118,7 +120,7 @@ namespace gautier.rss.data
 
         public static void TransformStaticFeedFiles(string feedSaveDirectoryPath, Feed[] feedInfos)
         {
-            SortedList<string, List<FeedArticle>> Feeds = TransformMSSyndicationToFeedArticles(feedSaveDirectoryPath, feedInfos);
+            SortedList<string, List<FeedArticle>> Feeds = TransformXmlFeedToFeedArticles(feedSaveDirectoryPath, feedInfos);
 
             foreach (var FeedInfo in feedInfos)
             {
@@ -197,6 +199,37 @@ namespace gautier.rss.data
             return FeedArticles;
         }
 
+        private static SortedList<string, List<FeedArticle>> TransformXmlFeedToFeedArticles(string feedSaveDirectoryPath, Feed[] feedInfos)
+        {
+            SortedList<string, List<FeedArticle>> FeedArticles = new();
+
+            foreach (var FeedInfo in feedInfos)
+            {
+                string RSSFeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, FeedInfo);
+
+                XFeed RSSFeed = RSSNetClient.CreateRSSXFeed(RSSFeedFilePath);
+
+                if (RSSFeed.Articles.Count > 0)
+                {
+                    if (FeedArticles.ContainsKey(FeedInfo.FeedName) == false)
+                    {
+                        FeedArticles[FeedInfo.FeedName] = new();
+                    }
+
+                    List<FeedArticle> Articles = FeedArticles[FeedInfo.FeedName];
+
+                    foreach (var RSSItem in RSSFeed.Articles)
+                    {
+                        FeedArticle FeedItem = CreateRSSFeedArticle(FeedInfo, RSSItem);
+
+                        Articles.Add(FeedItem);
+                    }
+                }
+            }
+
+            return FeedArticles;
+        }
+
         private static FeedArticle CreateRSSFeedArticle(Feed feed, SyndicationItem syndicate)
         {
             string ArticleText = string.Empty;
@@ -225,6 +258,17 @@ namespace gautier.rss.data
                         ArticleText = Content?.ToString() ?? string.Empty;
                     }
                     break;
+                default:
+                    if (feed.FeedName == "Ars Technica" && Debugger.IsAttached)
+                    {
+                        Debugger.Break();
+                    }
+                    break;
+            }
+
+            if (feed.FeedName == "Ars Technica" && string.IsNullOrWhiteSpace(ArticleText) && Debugger.IsAttached)
+            {
+                Debugger.Break();
             }
 
             string ArticleUrl = string.Empty;
@@ -250,6 +294,28 @@ namespace gautier.rss.data
                 FeedName = feed.FeedName,
                 HeadlineText = syndicate.Title.Text,
                 ArticleSummary = syndicate.Summary.Text,
+                ArticleText = ArticleText,
+                ArticleDate = ArticleDateText,
+                ArticleUrl = ArticleUrl,
+                RowInsertDateTime = DateTime.Now.ToString(_InvariantFormat.UniversalSortableDateTimePattern)
+            };
+        }
+
+        private static FeedArticle CreateRSSFeedArticle(Feed feed, XArticle article)
+        {
+            string ArticleText = article.ContentEncoded;
+            string ArticleUrl = article.Link;
+
+            DateTime ArticleDate;
+            DateTime.TryParse(article.PublicationDate, out ArticleDate);
+
+            string ArticleDateText = ArticleDate.ToString(_InvariantFormat.UniversalSortableDateTimePattern);
+
+            return new FeedArticle
+            {
+                FeedName = feed.FeedName,
+                HeadlineText = article.Title,
+                ArticleSummary = article.Description,
                 ArticleText = ArticleText,
                 ArticleDate = ArticleDateText,
                 ArticleUrl = ArticleUrl,

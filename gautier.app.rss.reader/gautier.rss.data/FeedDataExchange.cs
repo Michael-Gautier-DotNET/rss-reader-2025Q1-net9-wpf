@@ -111,6 +111,16 @@ public static class FeedDataExchange
 
                 FeedArticleUnion FeedArticlePair = new();
 
+                bool InText = false;
+                List<string> LineHeaders = new()
+                {
+                    "URL",
+                    "DATE",
+                    "HEAD",
+                    "TEXT",
+                    "SUM",
+                };
+
                 while (LineReader.EndOfStream == false && (FileLine = LineReader.ReadLine() ?? string.Empty) is not null)
                 {
                     if (string.IsNullOrWhiteSpace(FileLine))
@@ -126,9 +136,27 @@ public static class FeedDataExchange
                         Col1 = FileLine.Substring(0, FileLine.IndexOf(_Tab));
                         Col2 = FileLine.Substring(FileLine.IndexOf(_Tab) + 1);
                     }
-                    else if (Col1 == "SUM")
+
+                    if (LineHeaders.Contains(Col1))
                     {
-                        FeedArticlePair.ArticleDetail.ArticleSummary += Col2;
+                        InText = false;
+                    }
+
+                    if (Col1 == "SUM")
+                    {
+                        FeedArticlePair.ArticleDetail.ArticleSummary = Col2;
+                    }
+
+                    if (Col1 == "TEXT")
+                    {
+                        InText = true;
+
+                        FeedArticlePair.ArticleDetail.ArticleText = Col2;
+                    }
+
+                    if (LineHeaders.Contains(Col1) == false && InText)
+                    {
+                        FeedArticlePair.ArticleDetail.ArticleText += FileLine;
                     }
 
                     if (Col1 == "URL" && PreviousURL != Col2)
@@ -154,7 +182,20 @@ public static class FeedDataExchange
                         PreviousURL = Col2;
                     }
 
-                    CreateFeedArticle(FeedArticlePair, Col1, Col2);
+                    if (Col1 == "URL")
+                    {
+                        FeedArticlePair.ArticleDetail.ArticleUrl = Col2;
+                    }
+
+                    if (Col1 == "DATE")
+                    {
+                        FeedArticlePair.ArticleDetail.ArticleDate = Col2;
+                    }
+
+                    if (Col1 == "HEAD")
+                    {
+                        FeedArticlePair.ArticleDetail.HeadlineText = Col2;
+                    }
                 }
             }
         }
@@ -167,33 +208,6 @@ public static class FeedDataExchange
     private static string GetNormalizedFeedFilePath(string feedSaveDirectoryPath, Feed feedInfo)
     {
         return Path.Combine(feedSaveDirectoryPath, $"{feedInfo.FeedName}.txt");
-    }
-
-    private static FeedArticleUnion CreateFeedArticle(FeedArticleUnion feedArticle, string firstColumn, string secondColumn)
-    {
-        switch (firstColumn)
-        {
-            case "URL":
-                feedArticle.ArticleDetail.ArticleUrl = secondColumn;
-                break;
-            case "DATE":
-                feedArticle.ArticleDetail.ArticleDate = secondColumn;
-                break;
-            case "HEAD":
-                feedArticle.ArticleDetail.HeadlineText = secondColumn;
-                break;
-            case "TEXT":
-                feedArticle.ArticleDetail.ArticleText = secondColumn;
-                break;
-            case "SUM":
-                feedArticle.ArticleDetail.ArticleSummary = secondColumn;
-                break;
-            default:
-                // Handle unknown firstColumn value
-                break;
-        }
-
-        return feedArticle;
     }
 
     public static void WriteRSSArticlesToDatabase(string feedDbFilePath, SortedList<string, List<FeedArticleUnion>> feedsArticles)

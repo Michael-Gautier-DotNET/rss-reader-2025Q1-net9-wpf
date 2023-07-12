@@ -1,6 +1,7 @@
 ﻿using System.ServiceModel.Syndication;
 using System.Xml;
 
+using gautier.rss.data.FeedXml;
 using gautier.rss.data.RDFConversionXD;
 
 namespace gautier.rss.data
@@ -44,6 +45,20 @@ namespace gautier.rss.data
                     }
                 }
 
+            }
+
+            return RSSFeed;
+        }
+
+        public static XFeed CreateRSSXFeed(string rssFeedFilePath)
+        {
+            XFeed RSSFeed = new();
+
+            if (File.Exists(rssFeedFilePath) == true)
+            {
+                XFeedParser Parser = new();
+
+                RSSFeed = Parser.ParseFile(rssFeedFilePath);
             }
 
             return RSSFeed;

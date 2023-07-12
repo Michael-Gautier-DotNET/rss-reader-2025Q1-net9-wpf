@@ -199,7 +199,11 @@ namespace gautier.app.rss.reader.ui
 
             string article_text = empty_article;
 
-            if (string.IsNullOrWhiteSpace(article?.ArticleSummary) == false)
+            if (string.IsNullOrWhiteSpace(article?.ArticleText) == false)
+            {
+                article_text = article?.ArticleText;
+            }
+            else if (string.IsNullOrWhiteSpace(article?.ArticleSummary) == false)
             {
                 article_text = article?.ArticleSummary;
             }
