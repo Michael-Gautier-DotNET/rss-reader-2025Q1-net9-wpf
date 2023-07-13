@@ -94,6 +94,11 @@ namespace gautier.app.rss.reader.ui
         {
             _Feeds = FeedDataExchange.GetAllFeeds(_SQLiteDbConnectionString);
 
+            if (_FeedsInitialized)
+            {
+                DownloadFeeds();
+            }
+
             return;
         }
 
@@ -101,7 +106,11 @@ namespace gautier.app.rss.reader.ui
         {
             Action UIThreadAction = () =>
             {
-                if (_FeedsInitialized == false)
+                if (_FeedsInitialized)
+                {
+                    ApplyNewFeeds();
+                }
+                else
                 {
                     _FeedIndex = _Feeds.Count > -1 ? 0 : -1;
 
@@ -284,6 +293,16 @@ namespace gautier.app.rss.reader.ui
 
             ApplyArticle(FeedHeadlines?.SelectedItem as FeedArticle);
 
+            return;
+        }
+
+        private void DownloadFeeds()
+        {
+            return;
+        }
+
+        private void ApplyNewFeeds()
+        {
             return;
         }
     }
