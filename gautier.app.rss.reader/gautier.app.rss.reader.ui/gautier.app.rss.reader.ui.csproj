@@ -30,4 +30,9 @@
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="7.0.3" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="rss.db">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
