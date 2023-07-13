@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -16,7 +17,9 @@ namespace gautier.app.rss.reader.ui
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static readonly string _FeedDbFilePath = @"C:\RSSFeeds\feeds_db\rss.db";
+        private static readonly string _FeedSaveDirectoryPath = Directory.GetCurrentDirectory();
+
+        private static readonly string _FeedDbFilePath = @"rss.db";
         private static readonly string _SQLiteDbConnectionString = SQLUtil.GetSQLiteConnectionString(_FeedDbFilePath, 3);
 
         private readonly TabControl _ReaderTabs = new()
@@ -298,6 +301,16 @@ namespace gautier.app.rss.reader.ui
 
         private void DownloadFeeds()
         {
+            Feed[] FeedEntries = new List<Feed>(_Feeds.Values).ToArray();
+
+            FeedEntries = FeedDataExchange.MergeFeedEntries(_FeedDbFilePath, FeedEntries);
+
+            FeedFileConverter.CreateStaticFeedFiles(_FeedSaveDirectoryPath, _FeedDbFilePath, FeedEntries);
+
+            FeedFileConverter.TransformStaticFeedFiles(_FeedSaveDirectoryPath, FeedEntries);
+
+            FeedDataExchange.ImportStaticFeedFilesToDatabase(_FeedSaveDirectoryPath, _FeedDbFilePath, FeedEntries);
+
             return;
         }
 
