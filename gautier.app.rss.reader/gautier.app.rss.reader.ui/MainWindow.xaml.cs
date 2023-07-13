@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 using gautier.rss.data;
 using gautier.rss.data.RSSDb;
@@ -36,9 +37,16 @@ namespace gautier.app.rss.reader.ui
 
         private static readonly string _EmptyArticle = @"<html><head><title>test</title></head><body><div>&nbsp;</div></body></html>";
 
+        private bool _FeedsInitialized = false;
+
         private SortedList<string, Feed> _Feeds = null;
         private SortedList<string, FeedArticle> _FeedsArticles = null;
         private int _FeedIndex = -1;
+
+        private readonly TimeSpan _QuickTimeSpan = TimeSpan.FromSeconds(1);
+        private readonly TimeSpan _MidTimeSpan = TimeSpan.FromMinutes(1);
+
+        private DispatcherTimer _FeedUpdateTimer;
 
         private readonly BackgroundWorker _WindowInitializationTask = new();
 
@@ -51,8 +59,31 @@ namespace gautier.app.rss.reader.ui
 
         private void Window_Initialized(object sender, EventArgs e)
         {
+            _FeedUpdateTimer = new()
+            {
+                Interval = _QuickTimeSpan
+            };
+
+            _FeedUpdateTimer.Tick += UpdateFeedsOnInterval;
+
             _WindowInitializationTask.DoWork += WindowInitializationTask_DoWork;
             _WindowInitializationTask.RunWorkerCompleted += WindowInitializationTask_RunWorkerCompleted;
+
+            _FeedUpdateTimer.Start();
+
+            return;
+        }
+
+        private void UpdateFeedsOnInterval(object sender, EventArgs e)
+        {
+            _FeedUpdateTimer?.Stop();
+
+            bool IsUsingQuickTimeSpan = _FeedUpdateTimer?.Interval == _QuickTimeSpan;
+
+            if (IsUsingQuickTimeSpan)
+            {
+                _FeedUpdateTimer.Interval = _MidTimeSpan;
+            }
 
             _WindowInitializationTask.RunWorkerAsync();
 
@@ -70,15 +101,30 @@ namespace gautier.app.rss.reader.ui
 
         private void WindowInitializationTask_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            InitializeFeedConfigurations();
+            Action UIThreadAction = () =>
+            {
+                InitializeFeedConfigurations();
 
-            LayoutHeadlinesSection();
+                LayoutHeadlinesSection();
 
-            LayoutDetailSection();
+                LayoutDetailSection();
 
-            ApplyFeed();
+                ApplyFeed();
 
-            _ReaderTabs.SelectionChanged += ReaderTabs_SelectionChanged;
+                if (_FeedsInitialized == false)
+                {
+                    _FeedsInitialized = true;
+
+                    _ReaderTabs.SelectionChanged += ReaderTabs_SelectionChanged;
+                }
+            };
+
+            Dispatcher.BeginInvoke(UIThreadAction);
+
+            if (_FeedUpdateTimer?.IsEnabled == false)
+            {
+                _FeedUpdateTimer?.Stop();
+            }
 
             return;
         }
