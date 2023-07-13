@@ -12,6 +12,6 @@
         WindowState="Maximized"
          Initialized="Window_Initialized">
     <Grid 
-        Name="root_content"
+        Name="UIRoot"
         x:FieldModifier="internal" />
 </Window>

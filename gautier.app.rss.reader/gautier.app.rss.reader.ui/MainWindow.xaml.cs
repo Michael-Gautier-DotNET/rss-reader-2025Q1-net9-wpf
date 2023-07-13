@@ -16,9 +16,9 @@ namespace gautier.app.rss.reader.ui
     public partial class MainWindow : Window
     {
         private static readonly string _FeedDbFilePath = @"C:\RSSFeeds\feeds_db\rss.db";
-        private static readonly string SQLiteDbConnectionString = SQLUtil.GetSQLiteConnectionString(_FeedDbFilePath, 3);
+        private static readonly string _SQLiteDbConnectionString = SQLUtil.GetSQLiteConnectionString(_FeedDbFilePath, 3);
 
-        private TabControl reader_tabs = new()
+        private readonly TabControl _ReaderTabs = new()
         {
             Background = Brushes.Orange,
             BorderBrush = Brushes.Beige,
@@ -26,22 +26,21 @@ namespace gautier.app.rss.reader.ui
             Padding = new Thickness(1)
         };
 
-        private List<TabItem> reader_tab_items = new();
+        private readonly List<TabItem> _ReaderTabItems = new();
 
-        private Grid reader_feed_detail = new();
+        private readonly Grid _ReaderFeedDetail = new();
 
-        private TextBlock reader_feed_name = new();
-        private TextBlock reader_headline = new();
-        private WebBrowser reader_article = new();
-        private FeedArticle? article = new();
+        private readonly TextBlock _ReaderFeedName = new();
+        private readonly TextBlock _ReaderHeadline = new();
+        private readonly WebBrowser _ReaderArticle = new();
 
-        private static readonly string empty_article = @"<html><head><title>test</title></head><body><div>&nbsp;</div></body></html>";
+        private static readonly string _EmptyArticle = @"<html><head><title>test</title></head><body><div>&nbsp;</div></body></html>";
 
-        private SortedList<string, Feed> feeds = null;
-        private SortedList<string, FeedArticle> feeds_articles = null;
-        private int feed_index = -1;
+        private SortedList<string, Feed> _Feeds = null;
+        private SortedList<string, FeedArticle> _FeedsArticles = null;
+        private int _FeedIndex = -1;
 
-        private BackgroundWorker WindowInitializationTask = new();
+        private readonly BackgroundWorker _WindowInitializationTask = new();
 
         public MainWindow()
         {
@@ -52,19 +51,19 @@ namespace gautier.app.rss.reader.ui
 
         private void Window_Initialized(object sender, EventArgs e)
         {
-            WindowInitializationTask.DoWork += WindowInitializationTask_DoWork;
-            WindowInitializationTask.RunWorkerCompleted += WindowInitializationTask_RunWorkerCompleted;
+            _WindowInitializationTask.DoWork += WindowInitializationTask_DoWork;
+            _WindowInitializationTask.RunWorkerCompleted += WindowInitializationTask_RunWorkerCompleted;
 
-            WindowInitializationTask.RunWorkerAsync();
+            _WindowInitializationTask.RunWorkerAsync();
 
             return;
         }
 
         private void WindowInitializationTask_DoWork(object sender, DoWorkEventArgs e)
         {
-            feeds = FeedDataExchange.GetAllFeeds(SQLiteDbConnectionString);
+            _Feeds = FeedDataExchange.GetAllFeeds(_SQLiteDbConnectionString);
 
-            feed_index = feeds.Count > -1 ? 0 : -1;
+            _FeedIndex = _Feeds.Count > -1 ? 0 : -1;
 
             return;
         }
@@ -79,20 +78,20 @@ namespace gautier.app.rss.reader.ui
 
             ApplyFeed();
 
-            reader_tabs.SelectionChanged += ReaderTabs_SelectionChanged;
+            _ReaderTabs.SelectionChanged += ReaderTabs_SelectionChanged;
 
             return;
         }
 
         private void InitializeFeedConfigurations()
         {
-            var feed_names = feeds.Keys;
+            IList<string> FeedNames = _Feeds.Keys;
 
-            foreach (var feed_name in feed_names)
+            foreach (string FeedName in FeedNames)
             {
-                var reader_tab = new TabItem
+                TabItem ReaderTab = new TabItem
                 {
-                    Header = feed_name,
+                    Header = FeedName,
                     Content = new ListBox
                     {
                         DisplayMemberPath = "HeadlineText",
@@ -100,10 +99,10 @@ namespace gautier.app.rss.reader.ui
                     }
                 };
 
-                reader_tab_items.Add(reader_tab);
-                reader_tabs.Items.Add(reader_tab);
+                _ReaderTabItems.Add(ReaderTab);
+                _ReaderTabs.Items.Add(ReaderTab);
 
-                (reader_tab.Content as ListBox).SelectionChanged += Headline_SelectionChanged;
+                (ReaderTab.Content as ListBox).SelectionChanged += Headline_SelectionChanged;
             }
 
             return;
@@ -111,28 +110,28 @@ namespace gautier.app.rss.reader.ui
 
         private void LayoutDetailSection()
         {
-            foreach (var ch in new UIElement[] { reader_feed_name, reader_headline, reader_article })
+            foreach (UIElement El in new UIElement[] { _ReaderFeedName, _ReaderHeadline, _ReaderArticle })
             {
-                reader_feed_detail.Children.Add(ch);
+                _ReaderFeedDetail.Children.Add(El);
             }
 
-            var vertical_children_count = reader_feed_detail.Children.Count;
+            int VerticalChildrenCount = _ReaderFeedDetail.Children.Count;
 
-            for (var row_index = 0; row_index < vertical_children_count; row_index++)
+            for (int RowIndex = 0; RowIndex < VerticalChildrenCount; RowIndex++)
             {
-                var row_def = new RowDefinition
+                RowDefinition RowDef = new RowDefinition
                 {
                     Height = new GridLength(1, GridUnitType.Auto)
                 };
 
-                if (row_index == 2)
+                if (RowIndex == 2)
                 {
-                    row_def.Height = new GridLength(4, GridUnitType.Star);
+                    RowDef.Height = new GridLength(4, GridUnitType.Star);
                 }
 
-                reader_feed_detail.RowDefinitions.Add(row_def);
+                _ReaderFeedDetail.RowDefinitions.Add(RowDef);
 
-                Grid.SetRow(reader_feed_detail.Children[row_index], row_index);
+                Grid.SetRow(_ReaderFeedDetail.Children[RowIndex], RowIndex);
             }
 
             return;
@@ -140,23 +139,23 @@ namespace gautier.app.rss.reader.ui
 
         private void LayoutHeadlinesSection()
         {
-            foreach (var ch in new UIElement[] { reader_tabs, reader_feed_detail })
+            foreach (UIElement El in new UIElement[] { _ReaderTabs, _ReaderFeedDetail })
             {
-                root_content.Children.Add(ch);
+                UIRoot.Children.Add(El);
             }
 
-            var horizontal_children_count = root_content.Children.Count;
+            int HorizontalChildrenCount = UIRoot.Children.Count;
 
-            for (var col_index = 0; col_index < horizontal_children_count; col_index++)
+            for (int ColumnIndex = 0; ColumnIndex < HorizontalChildrenCount; ColumnIndex++)
             {
-                var col_def = new ColumnDefinition
+                var ColDef = new ColumnDefinition
                 {
                     Width = new GridLength(1, GridUnitType.Star)
                 };
 
-                root_content.ColumnDefinitions.Add(col_def);
+                UIRoot.ColumnDefinitions.Add(ColDef);
 
-                Grid.SetColumn(root_content.Children[col_index], col_index);
+                Grid.SetColumn(UIRoot.Children[ColumnIndex], ColumnIndex);
             }
 
             return;
@@ -166,7 +165,7 @@ namespace gautier.app.rss.reader.ui
         {
             get
             {
-                return feed_index > -1 && feed_index < reader_tab_items.Count;
+                return _FeedIndex > -1 && _FeedIndex < _ReaderTabItems.Count;
             }
         }
 
@@ -174,7 +173,7 @@ namespace gautier.app.rss.reader.ui
         {
             get
             {
-                return IsFeedIndexValid ? reader_tab_items[feed_index] : null;
+                return IsFeedIndexValid ? _ReaderTabItems[_FeedIndex] : null;
             }
         }
 
@@ -195,28 +194,26 @@ namespace gautier.app.rss.reader.ui
 
         private void ApplyArticle(FeedArticle? article)
         {
-            this.article = article;
-
-            string article_text = empty_article;
+            string ArticleText = _EmptyArticle;
 
             if (string.IsNullOrWhiteSpace(article?.ArticleText) == false)
             {
-                article_text = article?.ArticleText;
+                ArticleText = article?.ArticleText;
             }
             else if (string.IsNullOrWhiteSpace(article?.ArticleSummary) == false)
             {
-                article_text = article?.ArticleSummary;
+                ArticleText = article?.ArticleSummary;
             }
 
-            reader_headline.Text = article?.HeadlineText ?? string.Empty;
-            reader_article.NavigateToString(article_text);
+            _ReaderHeadline.Text = article?.HeadlineText ?? string.Empty;
+            _ReaderArticle.NavigateToString(ArticleText);
 
             return;
         }
 
         private void ReaderTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            feed_index = reader_tabs.SelectedIndex;
+            _FeedIndex = _ReaderTabs.SelectedIndex;
 
             ApplyFeed();
 
@@ -227,15 +224,15 @@ namespace gautier.app.rss.reader.ui
         {
             if (IsFeedIndexValid)
             {
-                var feed_name = reader_feed_name.Text = $"{ReaderTab.Header}";
+                var FeedName = _ReaderFeedName.Text = $"{ReaderTab.Header}";
 
                 if (FeedHeadlines != null && FeedHeadlines.HasItems == false)
                 {
-                    feeds_articles = FeedDataExchange.GetFeedArticles(SQLiteDbConnectionString, feed_name);
+                    _FeedsArticles = FeedDataExchange.GetFeedArticles(_SQLiteDbConnectionString, FeedName);
 
-                    var indexed_feed_articles = feeds_articles.Values;
+                    var IndexedFeedArticles = _FeedsArticles.Values;
 
-                    FeedHeadlines.ItemsSource = indexed_feed_articles;
+                    FeedHeadlines.ItemsSource = IndexedFeedArticles;
                 }
             }
 
