@@ -94,8 +94,6 @@ namespace gautier.app.rss.reader.ui
         {
             _Feeds = FeedDataExchange.GetAllFeeds(_SQLiteDbConnectionString);
 
-            _FeedIndex = _Feeds.Count > -1 ? 0 : -1;
-
             return;
         }
 
@@ -103,16 +101,18 @@ namespace gautier.app.rss.reader.ui
         {
             Action UIThreadAction = () =>
             {
-                InitializeFeedConfigurations();
-
-                LayoutHeadlinesSection();
-
-                LayoutDetailSection();
-
-                ApplyFeed();
-
                 if (_FeedsInitialized == false)
                 {
+                    _FeedIndex = _Feeds.Count > -1 ? 0 : -1;
+
+                    InitializeFeedConfigurations();
+
+                    LayoutHeadlinesSection();
+
+                    LayoutDetailSection();
+
+                    ApplyFeed();
+
                     _FeedsInitialized = true;
 
                     _ReaderTabs.SelectionChanged += ReaderTabs_SelectionChanged;
