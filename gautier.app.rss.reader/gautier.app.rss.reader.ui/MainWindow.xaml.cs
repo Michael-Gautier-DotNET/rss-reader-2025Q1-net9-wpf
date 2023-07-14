@@ -316,6 +316,34 @@ namespace gautier.app.rss.reader.ui
 
         private void ApplyNewFeeds()
         {
+            List<string> RSSFeedNames = new(_Feeds.Keys);
+
+            foreach (string FeedName in RSSFeedNames)
+            {
+                Feed FeedEntry = _Feeds[FeedName];
+
+                Console.WriteLine($"Feed:\t{FeedName}");
+                Console.WriteLine($"\t\tLast Retrieved {FeedEntry.LastRetrieved} from {FeedEntry.FeedUrl}");
+                Console.WriteLine($"\t\t\tConfiguration: Retrieve Limit Hrs {FeedEntry.RetrieveLimitHrs}, Retention Days {FeedEntry.RetentionDays}");
+                /*
+                 * Output article information.
+                 */
+
+                SortedList<string, FeedArticle> Articles = FeedDataExchange.GetFeedArticles(_SQLiteDbConnectionString, FeedName);
+
+                List<string> ArticleUrls = new(Articles.Keys);
+
+                foreach (string ArticleUrl in ArticleUrls)
+                {
+                    FeedArticle Article = Articles[ArticleUrl];
+
+                    Console.WriteLine($"URL: {ArticleUrl}");
+                    Console.WriteLine($"\t\tHeadline: {Article.HeadlineText}");
+                    /*Console.WriteLine($"\t\t\t\tText: {Article.ArticleSummary}");*/
+                    Console.WriteLine($"\n\n\n");
+                }
+            }
+
             return;
         }
     }
