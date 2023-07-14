@@ -16,19 +16,14 @@ namespace gautier.app.rss.reader.ui
             Content = "Feed Url"
         };
 
-        private readonly Label _LastRetrievedLabel = new()
-        {
-            Content = "Last Retrieved"
-        };
-
         private readonly Label _RetrieveLimitHrsLabel = new()
         {
-            Content = "Retrieve Limit (in Hours)"
+            Content = "Update Loop (in Hours)"
         };
 
         private readonly Label _RetentionDaysLabel = new()
         {
-            Content = "Auto Delete Articles after x Days"
+            Content = "Article Expires (in Days)"
         };
 
         private readonly TextBox _FeedName = new()
@@ -36,10 +31,6 @@ namespace gautier.app.rss.reader.ui
         };
 
         private readonly TextBox _FeedUrl = new()
-        {
-        };
-
-        private readonly TextBox _LastRetrieved = new()
         {
         };
 
@@ -78,8 +69,6 @@ namespace gautier.app.rss.reader.ui
                 _FeedName,
                 _FeedUrlLabel,
                 _FeedUrl,
-                _LastRetrievedLabel,
-                _LastRetrieved,
                 _RetrieveLimitHrsLabel,
                 _RetrieveLimitHrs,
                 _RetentionDaysLabel,
@@ -88,6 +77,8 @@ namespace gautier.app.rss.reader.ui
 
             foreach (UIElement El in Els)
             {
+                (El as FrameworkElement).Margin = new Thickness(12);
+
                 _UIRoot.Children.Add(El);
             }
 
@@ -97,8 +88,13 @@ namespace gautier.app.rss.reader.ui
             {
                 ColumnDefinition ColDef = new()
                 {
-                    Width = new(1, GridUnitType.Star)
+                    Width = new(1, GridUnitType.Auto)
                 };
+
+                if(_UIRoot.Children[ColumnIndex] is not Label)
+                {
+                    ColDef.Width = new(1, GridUnitType.Star);
+                }
 
                 _UIRoot.ColumnDefinitions.Add(ColDef);
 
