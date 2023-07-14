@@ -224,7 +224,7 @@ namespace gautier.app.rss.reader.ui
             return;
         }
 
-        private void CreateReaderOptionButtons()
+        private void LayoutReaderOptionButtons()
         {
             UIElement[] ReaderOptionElements =
             {
@@ -274,7 +274,7 @@ namespace gautier.app.rss.reader.ui
                 Grid.SetRow(_ReaderFeedDetail.Children[RowIndex], RowIndex);
             }
 
-            CreateReaderOptionButtons();
+            LayoutReaderOptionButtons();
 
             return;
         }

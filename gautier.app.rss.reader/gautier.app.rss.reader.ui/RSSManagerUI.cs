@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace gautier.app.rss.reader.ui
 {
@@ -42,9 +43,45 @@ namespace gautier.app.rss.reader.ui
         {
         };
 
+        private readonly StackPanel _FeedOptionsPanel = new()
+        {
+            FlowDirection = FlowDirection.RightToLeft,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Orientation = Orientation.Horizontal,
+            Background = Brushes.IndianRed,
+        };
+
+        private readonly Button _SaveButton = new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Background = Brushes.Orange,
+            BorderBrush = Brushes.OrangeRed,
+            BorderThickness = new Thickness(1),
+            Content = "Manage Feeds",
+            Margin = new Thickness(4),
+            Padding = new Thickness(4)
+        };
+
+        private readonly Button _DeleteButton = new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Background = Brushes.Orange,
+            BorderBrush = Brushes.OrangeRed,
+            BorderThickness = new Thickness(1),
+            Content = "View Article",
+            Margin = new Thickness(4),
+            Padding = new Thickness(4)
+        };
+
         private readonly Grid _UIRoot = new()
         {
-            ShowGridLines = true,
             VerticalAlignment = VerticalAlignment.Top
         };
 
@@ -63,6 +100,17 @@ namespace gautier.app.rss.reader.ui
             SizeToContent = SizeToContent.Manual;
             WindowState = WindowState.Maximized;
 
+            LayoutFeedInput();
+
+            Content = _UIRoot;
+
+            LayoutFeedOptionButtons();
+
+            return;
+        }
+
+        private void LayoutFeedInput()
+        {
             UIElement[] Els =
             {
                 _FeedNameLabel,
@@ -91,7 +139,7 @@ namespace gautier.app.rss.reader.ui
                     Width = new(1, GridUnitType.Auto)
                 };
 
-                if(_UIRoot.Children[ColumnIndex] is not Label)
+                if (_UIRoot.Children[ColumnIndex] is not Label)
                 {
                     ColDef.Width = new(1, GridUnitType.Star);
                 }
@@ -101,7 +149,21 @@ namespace gautier.app.rss.reader.ui
                 Grid.SetColumn(_UIRoot.Children[ColumnIndex], ColumnIndex);
             }
 
-            Content = _UIRoot;
+            return;
+        }
+
+        private void LayoutFeedOptionButtons()
+        {
+            UIElement[] ReaderOptionElements =
+            {
+                    _SaveButton,
+                    _DeleteButton,
+                };
+
+            foreach (UIElement El in ReaderOptionElements)
+            {
+                _FeedOptionsPanel.Children.Add(El);
+            }
 
             return;
         }
