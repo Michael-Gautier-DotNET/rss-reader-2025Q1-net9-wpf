@@ -53,6 +53,43 @@ namespace gautier.app.rss.reader.ui
 
         private readonly BackgroundWorker _WindowInitializationTask = new();
 
+        private readonly StackPanel _ReaderOptionsPanel = new()
+        {
+            FlowDirection = FlowDirection.RightToLeft,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Orientation = Orientation.Horizontal,
+            Background = Brushes.IndianRed,
+        };
+
+        private readonly Button _ReaderManagerButton = new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Background = Brushes.Orange,
+            BorderBrush = Brushes.OrangeRed,
+            BorderThickness = new Thickness(1),
+            Content = "Manage Feeds",
+            Margin = new Thickness(4),
+            Padding = new Thickness(4)
+        };
+
+        private readonly Button _ReaderArticleLaunchButton = new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Background = Brushes.Orange,
+            BorderBrush = Brushes.OrangeRed,
+            BorderThickness = new Thickness(1),
+            Content = "View Article",
+            Margin = new Thickness(4),
+            Padding = new Thickness(4)
+        };
+
         public MainWindow()
         {
             InitializeComponent();
@@ -73,6 +110,27 @@ namespace gautier.app.rss.reader.ui
             _WindowInitializationTask.RunWorkerCompleted += WindowInitializationTask_RunWorkerCompleted;
 
             _FeedUpdateTimer.Start();
+
+            _ReaderManagerButton.Click += ReaderManagerButton_Click;
+            _ReaderArticleLaunchButton.Click += ReaderArticleLaunchButton_Click;
+
+            return;
+        }
+
+        private void ReaderArticleLaunchButton_Click(object sender, RoutedEventArgs e)
+        {
+            //Show article in system's web browser.
+
+            return;
+        }
+
+        private void ReaderManagerButton_Click(object sender, RoutedEventArgs e)
+        {
+            /*Stop any timers and RSS feed article updates.*/
+
+            RSSManagerUI UI = new();
+
+            UI.ShowDialog();
 
             return;
         }
@@ -166,9 +224,33 @@ namespace gautier.app.rss.reader.ui
             return;
         }
 
+        private void CreateReaderOptionButtons()
+        {
+            UIElement[] ReaderOptionElements =
+            {
+                    _ReaderArticleLaunchButton,
+                    _ReaderManagerButton,
+                };
+
+            foreach (UIElement El in ReaderOptionElements)
+            {
+                _ReaderOptionsPanel.Children.Add(El);
+            }
+
+            return;
+        }
+
         private void LayoutDetailSection()
         {
-            foreach (UIElement El in new UIElement[] { _ReaderFeedName, _ReaderHeadline, _ReaderArticle })
+            UIElement[] Els =
+            {
+                _ReaderFeedName,
+                _ReaderHeadline,
+                _ReaderArticle,
+                _ReaderOptionsPanel
+            };
+
+            foreach (UIElement El in Els)
             {
                 _ReaderFeedDetail.Children.Add(El);
             }
@@ -192,12 +274,20 @@ namespace gautier.app.rss.reader.ui
                 Grid.SetRow(_ReaderFeedDetail.Children[RowIndex], RowIndex);
             }
 
+            CreateReaderOptionButtons();
+
             return;
         }
 
         private void LayoutHeadlinesSection()
         {
-            foreach (UIElement El in new UIElement[] { _ReaderTabs, _ReaderFeedDetail })
+            UIElement[] Els =
+            {
+                _ReaderTabs, 
+                _ReaderFeedDetail
+            };
+
+            foreach (UIElement El in Els)
             {
                 UIRoot.Children.Add(El);
             }
