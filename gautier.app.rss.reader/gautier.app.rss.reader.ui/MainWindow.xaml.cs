@@ -147,7 +147,7 @@ namespace gautier.app.rss.reader.ui
 
             foreach (string FeedName in FeedNames)
             {
-                TabItem ReaderTab = new TabItem
+                TabItem ReaderTab = new()
                 {
                     Header = FeedName,
                     Content = new ListBox
@@ -177,14 +177,14 @@ namespace gautier.app.rss.reader.ui
 
             for (int RowIndex = 0; RowIndex < VerticalChildrenCount; RowIndex++)
             {
-                RowDefinition RowDef = new RowDefinition
+                RowDefinition RowDef = new()
                 {
-                    Height = new GridLength(1, GridUnitType.Auto)
+                    Height = new(1, GridUnitType.Auto)
                 };
 
                 if (RowIndex == 2)
                 {
-                    RowDef.Height = new GridLength(4, GridUnitType.Star);
+                    RowDef.Height = new(4, GridUnitType.Star);
                 }
 
                 _ReaderFeedDetail.RowDefinitions.Add(RowDef);
@@ -206,9 +206,9 @@ namespace gautier.app.rss.reader.ui
 
             for (int ColumnIndex = 0; ColumnIndex < HorizontalChildrenCount; ColumnIndex++)
             {
-                var ColDef = new ColumnDefinition
+                ColumnDefinition ColDef = new()
                 {
-                    Width = new GridLength(1, GridUnitType.Star)
+                    Width = new(1, GridUnitType.Star)
                 };
 
                 UIRoot.ColumnDefinitions.Add(ColDef);
