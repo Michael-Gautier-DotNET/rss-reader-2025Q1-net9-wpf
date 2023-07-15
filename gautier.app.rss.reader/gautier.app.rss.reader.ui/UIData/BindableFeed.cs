@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 
@@ -38,21 +40,21 @@ namespace gautier.app.rss.reader.ui.UIData
 
         public string OriginalUrl { get; set; } = string.Empty;
 
-        public string LastRetrieved
+        public DateTime LastRetrieved
         {
-            get => $"{GetValue(LastRetrievedProperty)}";
+            get => DateTime.Parse($"{GetValue(LastRetrievedProperty)}");
             set => SetValue(LastRetrievedProperty, value);
         }
 
-        public string RetrieveLimitHrs
+        public int RetrieveLimitHrs
         {
-            get => $"{GetValue(RetrieveLimitHrsProperty)}";
+            get => int.Parse($"{GetValue(RetrieveLimitHrsProperty)}");
             set => SetValue(RetrieveLimitHrsProperty, value);
         }
 
-        public string RetentionDays
+        public int RetentionDays
         {
-            get => $"{GetValue(RetentionDaysProperty)}";
+            get => int.Parse($"{GetValue(RetentionDaysProperty)}");
             set => SetValue(RetentionDaysProperty, value);
         }
 
@@ -93,6 +95,27 @@ namespace gautier.app.rss.reader.ui.UIData
             UrlValidationFailed?.Invoke(this, EventArgs.Empty);
 
             return;
+        }
+
+        internal static ObservableCollection<BindableFeed> ConvertFeeds(SortedList<string, Feed> feeds)
+        {
+            ObservableCollection<BindableFeed> BFeeds = new();
+
+            foreach (Feed FeedEntry in feeds.Values)
+            {
+                BindableFeed BFeed = new()
+                {
+                    Name = FeedEntry.FeedName,
+                    Url = FeedEntry.FeedUrl,
+                    LastRetrieved = DateTime.Parse(FeedEntry.LastRetrieved),
+                    RetrieveLimitHrs = int.Parse(FeedEntry.RetrieveLimitHrs),
+                    RetentionDays = int.Parse(FeedEntry.RetentionDays),
+                };
+
+                BFeeds.Add(BFeed);
+            }
+
+            return BFeeds;
         }
     }
 }
