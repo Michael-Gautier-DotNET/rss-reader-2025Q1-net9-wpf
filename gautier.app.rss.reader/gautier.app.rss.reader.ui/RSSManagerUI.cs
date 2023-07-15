@@ -2,6 +2,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace gautier.app.rss.reader.ui
 {
@@ -61,7 +64,7 @@ namespace gautier.app.rss.reader.ui
             Background = Brushes.Orange,
             BorderBrush = Brushes.OrangeRed,
             BorderThickness = new Thickness(1),
-            Content = "Manage Feeds",
+            Content = "Save Feed",
             Margin = new Thickness(4),
             Padding = new Thickness(4)
         };
@@ -75,19 +78,25 @@ namespace gautier.app.rss.reader.ui
             Background = Brushes.Orange,
             BorderBrush = Brushes.OrangeRed,
             BorderThickness = new Thickness(1),
-            Content = "View Article",
+            Content = "Delete Feed",
             Margin = new Thickness(4),
             Padding = new Thickness(4)
         };
 
         private readonly DataGrid _FeedsGrid = new()
         {
-            VerticalAlignment = VerticalAlignment.Stretch
+            VerticalAlignment = VerticalAlignment.Stretch,
+            AutoGenerateColumns = false,
         };
 
         private readonly Grid _UIRoot = new()
         {
-            VerticalAlignment = VerticalAlignment.Top
+            //VerticalAlignment = VerticalAlignment.Top
+        };
+
+        private readonly Grid _FeedInputGrid = new()
+        {
+            //VerticalAlignment = VerticalAlignment.Top
         };
 
         public RSSManagerUI()
@@ -105,13 +114,13 @@ namespace gautier.app.rss.reader.ui
             SizeToContent = SizeToContent.Manual;
             WindowState = WindowState.Maximized;
 
-            Content = _UIRoot;
-
             LayoutFeedInput();
 
             LayoutFeedOptionButtons();
 
             LayoutFeedUI();
+
+            Content = _UIRoot;
 
             return;
         }
@@ -132,12 +141,18 @@ namespace gautier.app.rss.reader.ui
 
             foreach (UIElement El in Els)
             {
-                (El as FrameworkElement).Margin = new Thickness(12);
+                if (El is FrameworkElement)
+                {
+                    FrameworkElement FEl = El as FrameworkElement;
 
-                _UIRoot.Children.Add(El);
+                    FEl.Margin = new Thickness(12);
+                    FEl.VerticalAlignment = VerticalAlignment.Top;
+                }
+
+                _FeedInputGrid.Children.Add(El);
             }
 
-            int HorizontalChildrenCount = _UIRoot.Children.Count;
+            int HorizontalChildrenCount = _FeedInputGrid.Children.Count;
 
             for (int ColumnIndex = 0; ColumnIndex < HorizontalChildrenCount; ColumnIndex++)
             {
@@ -146,14 +161,14 @@ namespace gautier.app.rss.reader.ui
                     Width = new(1, GridUnitType.Auto)
                 };
 
-                if (_UIRoot.Children[ColumnIndex] is not Label)
+                if (_FeedInputGrid.Children[ColumnIndex] is not Label)
                 {
                     ColDef.Width = new(1, GridUnitType.Star);
                 }
 
-                _UIRoot.ColumnDefinitions.Add(ColDef);
+                _FeedInputGrid.ColumnDefinitions.Add(ColDef);
 
-                Grid.SetColumn(_UIRoot.Children[ColumnIndex], ColumnIndex);
+                Grid.SetColumn(_FeedInputGrid.Children[ColumnIndex], ColumnIndex);
             }
 
             return;
@@ -163,9 +178,9 @@ namespace gautier.app.rss.reader.ui
         {
             UIElement[] ReaderOptionElements =
             {
-                    _SaveButton,
-                    _DeleteButton,
-                };
+                _SaveButton,
+                _DeleteButton,
+            };
 
             foreach (UIElement El in ReaderOptionElements)
             {
@@ -179,6 +194,7 @@ namespace gautier.app.rss.reader.ui
         {
             UIElement[] Els =
             {
+                _FeedInputGrid,
                 _FeedsGrid,
                 _FeedOptionsPanel
             };
@@ -200,23 +216,14 @@ namespace gautier.app.rss.reader.ui
                 /*
                  * Feeds Grid
                  */
-                if (RowIndex == 0)
+                if (RowIndex == 1)
                 {
                     RowDef.Height = new(4, GridUnitType.Star);
                 }
 
                 _UIRoot.RowDefinitions.Add(RowDef);
 
-                /*
-                 * The Feed input text boxes already set to row 1 (index == 0).
-                 * Next available row starts at unused row + 1.
-                 */
-                int GridRow = RowIndex + 1;
-
-                UIElement El = Els[RowIndex];
-
-                Grid.SetRow(El, GridRow);
-                Grid.SetColumnSpan(El, _UIRoot.ColumnDefinitions.Count);
+                Grid.SetRow(Els[RowIndex], RowIndex);
             }
 
             return;
