@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 
@@ -35,18 +36,36 @@ namespace gautier.app.rss.reader.ui
 
         private readonly TextBox _FeedName = new()
         {
+            MaxLength = 800
         };
 
         private readonly TextBox _FeedUrl = new()
         {
+            MaxLength = 10000
         };
 
-        private readonly TextBox _RetrieveLimitHrs = new()
+        private readonly Slider _RetrieveLimitHrs = new()
         {
+            Minimum = 1,
+            Maximum = 14,
+            Value = 1,
+            TickFrequency = 1,
+            Ticks = { 1, 2, 3, 4, 8, 10, 14 },
+            IsSnapToTickEnabled = true,
+            TickPlacement = TickPlacement.Both,
+            AutoToolTipPlacement = AutoToolTipPlacement.BottomRight,
         };
 
-        private readonly TextBox _RetentionDays = new()
+        private readonly Slider _RetentionDays = new()
         {
+            Minimum = 1,
+            Maximum = 60,
+            Value = 45,
+            TickFrequency = 1,
+            Ticks = { 1, 3, 6, 9, 10, 20, 30, 45, 60 },
+            IsSnapToTickEnabled = true,
+            TickPlacement = TickPlacement.Both,
+            AutoToolTipPlacement = AutoToolTipPlacement.BottomRight,
         };
 
         private readonly StackPanel _FeedOptionsPanel = new()
@@ -94,6 +113,7 @@ namespace gautier.app.rss.reader.ui
         {
             VerticalAlignment = VerticalAlignment.Stretch,
             AutoGenerateColumns = false,
+            IsReadOnly = true,
         };
 
         private readonly Grid _UIRoot = new()
@@ -118,8 +138,9 @@ namespace gautier.app.rss.reader.ui
         private void RSSManagerUI_Initialized(object? sender, EventArgs e)
         {
             Title = "Gautier RSS | Feed Manager";
-            Height = 450;
-            Width = 800;
+            MinHeight = 680;
+            MinWidth = 1330;
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
             SizeToContent = SizeToContent.Manual;
             WindowState = WindowState.Maximized;
 
@@ -174,7 +195,16 @@ namespace gautier.app.rss.reader.ui
 
                 if (_FeedInputGrid.Children[ColumnIndex] is not Label)
                 {
-                    ColDef.Width = new(1, GridUnitType.Star);
+                    switch (ColumnIndex)
+                    {
+                        case 5:
+                        case 7:
+                            ColDef.Width = new(0.2, GridUnitType.Star);
+                            break;
+                        default:
+                            ColDef.Width = new(1, GridUnitType.Star);
+                            break;
+                    }
                 }
 
                 _FeedInputGrid.ColumnDefinitions.Add(ColDef);
@@ -214,11 +244,13 @@ namespace gautier.app.rss.reader.ui
 
             for (int ColI = 0; ColI < GridColumnNames.Length; ColI++)
             {
+                DataGridColumn Col;
+
                 KeyValuePair<string, string> ColumnNamePair = GridColumnNames[ColI];
 
-                DataGridLength ColumnWidth = new (1, DataGridLengthUnitType.Star);
+                DataGridLength ColumnWidth = new(1, DataGridLengthUnitType.Star);
 
-                switch(ColI)
+                switch (ColI)
                 {
                     case 2:
                     case 3:
@@ -226,12 +258,22 @@ namespace gautier.app.rss.reader.ui
                         break;
                 }
 
-                DataGridTextColumn Col = new()
+                Col = new DataGridTextColumn()
                 {
                     Header = ColumnNamePair.Key,
                     Binding = new Binding(ColumnNamePair.Value),
                     Width = ColumnWidth,
                 };
+
+                if (ColI == 1)
+                {
+                    Col = new DataGridHyperlinkColumn()
+                    {
+                        Header = ColumnNamePair.Key,
+                        Binding = new Binding(ColumnNamePair.Value),
+                        Width = ColumnWidth,
+                    };
+                }
 
                 _FeedsGrid.Columns.Add(Col);
             }
@@ -241,7 +283,7 @@ namespace gautier.app.rss.reader.ui
             _FeedsGrid.SelectionChanged += FeedsGrid_SelectionChanged;
             _FeedsGrid.ItemsSource = _Feeds;
 
-            if(_Feeds.Count > 0)
+            if (_Feeds.Count > 0)
             {
                 _FeedsGrid.SelectedIndex = 0;
             }
@@ -257,8 +299,8 @@ namespace gautier.app.rss.reader.ui
 
                 _FeedName.Text = BFeed.Name;
                 _FeedUrl.Text = BFeed.Url;
-                _RetrieveLimitHrs.Text = $"{BFeed.RetrieveLimitHrs}";
-                _RetentionDays.Text = $"{BFeed.RetentionDays}";
+                _RetrieveLimitHrs.Value = BFeed.RetrieveLimitHrs;
+                _RetentionDays.Value = BFeed.RetentionDays;
             }
 
             return;
