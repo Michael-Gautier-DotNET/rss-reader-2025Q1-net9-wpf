@@ -117,5 +117,26 @@ namespace gautier.app.rss.reader.ui.UIData
 
             return BFeeds;
         }
+
+        internal static List<Feed> ConvertFeeds(ObservableCollection<BindableFeed> feeds)
+        {
+            List<Feed> DFeeds = new();
+
+            foreach (BindableFeed BFeed in feeds)
+            {
+                Feed DFeed = new()
+                {
+                    FeedName = BFeed.Name,
+                    FeedUrl = BFeed.Url,
+                    LastRetrieved = $"{BFeed.LastRetrieved}",
+                    RetrieveLimitHrs = $"{BFeed.RetrieveLimitHrs}",
+                    RetentionDays = $"{BFeed.RetentionDays}",
+                };
+
+                DFeeds.Add(DFeed);
+            }
+
+            return DFeeds;
+        }
     }
 }

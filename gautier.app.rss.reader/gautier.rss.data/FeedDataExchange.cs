@@ -226,6 +226,20 @@ public static class FeedDataExchange
         return;
     }
 
+    public static void WriteRSSFeedToDatabase(string feedDbFilePath, List<Feed> feeds)
+    {
+        string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
+
+        using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
+
+        foreach(Feed FeedEntry in feeds)
+        {
+            ModifyFeed(SQLConn, FeedEntry);
+        }
+
+        return;
+    }
+
     private static SortedList<string, Feed> CollectFeeds(SortedList<string, List<FeedArticleUnion>> feedsArticles, IList<string> feedNames)
     {
         SortedList<string, Feed> Feeds = new();
