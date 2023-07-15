@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 
+using gautier.app.rss.reader.ui.UIData;
 using gautier.rss.data;
-using gautier.rss.data.RSSDb;
 
 namespace gautier.app.rss.reader.ui
 {
@@ -17,11 +16,6 @@ namespace gautier.app.rss.reader.ui
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static readonly string _FeedSaveDirectoryPath = Directory.GetCurrentDirectory();
-
-        private static readonly string _FeedDbFilePath = @"rss.db";
-        private static readonly string _SQLiteDbConnectionString = SQLUtil.GetSQLiteConnectionString(_FeedDbFilePath, 3);
-
         private readonly TabControl _ReaderTabs = new()
         {
             Background = Brushes.Orange,
@@ -153,7 +147,7 @@ namespace gautier.app.rss.reader.ui
 
         private void WindowInitializationTask_DoWork(object sender, DoWorkEventArgs e)
         {
-            _Feeds = FeedDataExchange.GetAllFeeds(_SQLiteDbConnectionString);
+            _Feeds = FeedDataExchange.GetAllFeeds(FeedConfiguration.SQLiteDbConnectionString);
 
             if (_FeedsInitialized)
             {
@@ -376,7 +370,7 @@ namespace gautier.app.rss.reader.ui
 
                 if (FeedHeadlines != null && FeedHeadlines.HasItems == false)
                 {
-                    _FeedsArticles = FeedDataExchange.GetFeedArticles(_SQLiteDbConnectionString, FeedName);
+                    _FeedsArticles = FeedDataExchange.GetFeedArticles(FeedConfiguration.SQLiteDbConnectionString, FeedName);
 
                     var IndexedFeedArticles = _FeedsArticles.Values;
 
@@ -393,13 +387,13 @@ namespace gautier.app.rss.reader.ui
         {
             Feed[] FeedEntries = new List<Feed>(_Feeds.Values).ToArray();
 
-            FeedEntries = FeedDataExchange.MergeFeedEntries(_FeedDbFilePath, FeedEntries);
+            FeedEntries = FeedDataExchange.MergeFeedEntries(FeedConfiguration.FeedDbFilePath, FeedEntries);
 
-            FeedFileConverter.CreateStaticFeedFiles(_FeedSaveDirectoryPath, _FeedDbFilePath, FeedEntries);
+            FeedFileConverter.CreateStaticFeedFiles(FeedConfiguration.FeedSaveDirectoryPath, FeedConfiguration.FeedDbFilePath, FeedEntries);
 
-            FeedFileConverter.TransformStaticFeedFiles(_FeedSaveDirectoryPath, FeedEntries);
+            FeedFileConverter.TransformStaticFeedFiles(FeedConfiguration.FeedSaveDirectoryPath, FeedEntries);
 
-            FeedDataExchange.ImportStaticFeedFilesToDatabase(_FeedSaveDirectoryPath, _FeedDbFilePath, FeedEntries);
+            FeedDataExchange.ImportStaticFeedFilesToDatabase(FeedConfiguration.FeedSaveDirectoryPath, FeedConfiguration.FeedDbFilePath, FeedEntries);
 
             return;
         }
@@ -419,7 +413,7 @@ namespace gautier.app.rss.reader.ui
                  * Output article information.
                  */
 
-                SortedList<string, FeedArticle> Articles = FeedDataExchange.GetFeedArticles(_SQLiteDbConnectionString, FeedName);
+                SortedList<string, FeedArticle> Articles = FeedDataExchange.GetFeedArticles(FeedConfiguration.SQLiteDbConnectionString, FeedName);
 
                 List<string> ArticleUrls = new(Articles.Keys);
 
