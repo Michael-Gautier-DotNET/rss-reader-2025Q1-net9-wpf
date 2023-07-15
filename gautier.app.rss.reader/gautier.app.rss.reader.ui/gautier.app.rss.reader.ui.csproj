@@ -32,7 +32,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Update="rss.db">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 </Project>
