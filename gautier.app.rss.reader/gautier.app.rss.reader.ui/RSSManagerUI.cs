@@ -80,6 +80,11 @@ namespace gautier.app.rss.reader.ui
             Padding = new Thickness(4)
         };
 
+        private readonly DataGrid _FeedsGrid = new()
+        {
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+
         private readonly Grid _UIRoot = new()
         {
             VerticalAlignment = VerticalAlignment.Top
@@ -100,11 +105,13 @@ namespace gautier.app.rss.reader.ui
             SizeToContent = SizeToContent.Manual;
             WindowState = WindowState.Maximized;
 
-            LayoutFeedInput();
-
             Content = _UIRoot;
 
+            LayoutFeedInput();
+
             LayoutFeedOptionButtons();
+
+            LayoutFeedUI();
 
             return;
         }
@@ -163,6 +170,53 @@ namespace gautier.app.rss.reader.ui
             foreach (UIElement El in ReaderOptionElements)
             {
                 _FeedOptionsPanel.Children.Add(El);
+            }
+
+            return;
+        }
+
+        private void LayoutFeedUI()
+        {
+            UIElement[] Els =
+            {
+                _FeedsGrid,
+                _FeedOptionsPanel
+            };
+
+            foreach (UIElement El in Els)
+            {
+                _UIRoot.Children.Add(El);
+            }
+
+            int VerticalChildrenCount = Els.Length;
+
+            for (int RowIndex = 0; RowIndex < VerticalChildrenCount; RowIndex++)
+            {
+                RowDefinition RowDef = new()
+                {
+                    Height = new(1, GridUnitType.Auto)
+                };
+
+                /*
+                 * Feeds Grid
+                 */
+                if (RowIndex == 0)
+                {
+                    RowDef.Height = new(4, GridUnitType.Star);
+                }
+
+                _UIRoot.RowDefinitions.Add(RowDef);
+
+                /*
+                 * The Feed input text boxes already set to row 1 (index == 0).
+                 * Next available row starts at unused row + 1.
+                 */
+                int GridRow = RowIndex + 1;
+
+                UIElement El = Els[RowIndex];
+
+                Grid.SetRow(El, GridRow);
+                Grid.SetColumnSpan(El, _UIRoot.ColumnDefinitions.Count);
             }
 
             return;
