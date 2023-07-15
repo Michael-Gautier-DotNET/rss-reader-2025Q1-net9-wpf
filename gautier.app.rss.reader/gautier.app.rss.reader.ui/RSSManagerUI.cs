@@ -1,10 +1,13 @@
 ﻿using System;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Media;
+
+using gautier.app.rss.reader.ui.UIData;
+using gautier.rss.data;
 
 namespace gautier.app.rss.reader.ui
 {
@@ -83,6 +86,10 @@ namespace gautier.app.rss.reader.ui
             Padding = new Thickness(4)
         };
 
+        private readonly SortedList<string, Feed> _OriginalFeeds;
+
+        private ObservableCollection<BindableFeed> _Feeds = new();
+
         private readonly DataGrid _FeedsGrid = new()
         {
             VerticalAlignment = VerticalAlignment.Stretch,
@@ -101,6 +108,8 @@ namespace gautier.app.rss.reader.ui
 
         public RSSManagerUI()
         {
+            _OriginalFeeds = FeedDataExchange.GetAllFeeds(FeedConfiguration.SQLiteDbConnectionString);
+
             Initialized += RSSManagerUI_Initialized;
 
             return;
@@ -115,6 +124,8 @@ namespace gautier.app.rss.reader.ui
             WindowState = WindowState.Maximized;
 
             LayoutFeedInput();
+
+            LayoutFeedsGrid();
 
             LayoutFeedOptionButtons();
 
@@ -146,7 +157,7 @@ namespace gautier.app.rss.reader.ui
                     FrameworkElement FEl = El as FrameworkElement;
 
                     FEl.Margin = new Thickness(12);
-                    FEl.VerticalAlignment = VerticalAlignment.Top;
+                    FEl.VerticalAlignment = VerticalAlignment.Center;
                 }
 
                 _FeedInputGrid.Children.Add(El);
@@ -185,6 +196,69 @@ namespace gautier.app.rss.reader.ui
             foreach (UIElement El in ReaderOptionElements)
             {
                 _FeedOptionsPanel.Children.Add(El);
+            }
+
+            return;
+        }
+
+        private void LayoutFeedsGrid()
+        {
+            KeyValuePair<string, string>[] GridColumnNames =
+            {
+                new KeyValuePair<string, string>("Name", "Name"),
+                new KeyValuePair<string, string>("Url", "Url"),
+                new KeyValuePair < string, string >("Retrieve Limit (Hrs)", "RetrieveLimitHrs"),
+                new KeyValuePair < string, string >("Retention Days", "RetentionDays"),
+                new KeyValuePair < string, string >("Last Retrieved", "LastRetrieved")
+            };
+
+            for (int ColI = 0; ColI < GridColumnNames.Length; ColI++)
+            {
+                KeyValuePair<string, string> ColumnNamePair = GridColumnNames[ColI];
+
+                DataGridLength ColumnWidth = new (1, DataGridLengthUnitType.Star);
+
+                switch(ColI)
+                {
+                    case 2:
+                    case 3:
+                        ColumnWidth = new DataGridLength(1, DataGridLengthUnitType.SizeToHeader);
+                        break;
+                }
+
+                DataGridTextColumn Col = new()
+                {
+                    Header = ColumnNamePair.Key,
+                    Binding = new Binding(ColumnNamePair.Value),
+                    Width = ColumnWidth,
+                };
+
+                _FeedsGrid.Columns.Add(Col);
+            }
+
+            _Feeds = BindableFeed.ConvertFeeds(_OriginalFeeds);
+
+            _FeedsGrid.SelectionChanged += FeedsGrid_SelectionChanged;
+            _FeedsGrid.ItemsSource = _Feeds;
+
+            if(_Feeds.Count > 0)
+            {
+                _FeedsGrid.SelectedIndex = 0;
+            }
+
+            return;
+        }
+
+        private void FeedsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_FeedsGrid.SelectedItem is BindableFeed)
+            {
+                BindableFeed BFeed = _FeedsGrid.SelectedItem as BindableFeed;
+
+                _FeedName.Text = BFeed.Name;
+                _FeedUrl.Text = BFeed.Url;
+                _RetrieveLimitHrs.Text = $"{BFeed.RetrieveLimitHrs}";
+                _RetentionDays.Text = $"{BFeed.RetentionDays}";
             }
 
             return;
