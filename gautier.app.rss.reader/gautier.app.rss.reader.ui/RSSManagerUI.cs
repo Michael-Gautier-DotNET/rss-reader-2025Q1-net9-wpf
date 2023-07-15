@@ -116,6 +116,11 @@ namespace gautier.app.rss.reader.ui
             IsReadOnly = true,
         };
 
+        private BindableFeed CurrentFeed
+        {
+            get => _FeedsGrid.SelectedItem as BindableFeed;
+        }
+
         private readonly Grid _UIRoot = new();
 
         private readonly Grid _FeedInputGrid = new();
@@ -302,7 +307,7 @@ namespace gautier.app.rss.reader.ui
         {
             if (_FeedsGrid.SelectedItem is BindableFeed)
             {
-                BindableFeed BFeed = _FeedsGrid.SelectedItem as BindableFeed;
+                BindableFeed BFeed = CurrentFeed;
 
                 _FeedName.Text = BFeed.Name;
                 _FeedUrl.Text = BFeed.Url;
