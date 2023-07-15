@@ -105,7 +105,7 @@ namespace gautier.app.rss.reader.ui
             Padding = new Thickness(4)
         };
 
-        private readonly SortedList<string, Feed> _OriginalFeeds;
+        private SortedList<string, Feed> _OriginalFeeds;
 
         private ObservableCollection<BindableFeed> _Feeds = new();
 
@@ -116,15 +116,9 @@ namespace gautier.app.rss.reader.ui
             IsReadOnly = true,
         };
 
-        private readonly Grid _UIRoot = new()
-        {
-            //VerticalAlignment = VerticalAlignment.Top
-        };
+        private readonly Grid _UIRoot = new();
 
-        private readonly Grid _FeedInputGrid = new()
-        {
-            //VerticalAlignment = VerticalAlignment.Top
-        };
+        private readonly Grid _FeedInputGrid = new();
 
         public RSSManagerUI()
         {
@@ -154,6 +148,20 @@ namespace gautier.app.rss.reader.ui
 
             Content = _UIRoot;
 
+            _FeedsGrid.SelectionChanged += FeedsGrid_SelectionChanged;
+            _DeleteButton.Click += DeleteButton_Click;
+            _SaveButton.Click += SaveButton_Click;
+
+            return;
+        }
+
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            return;
+        }
+
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
             return;
         }
 
@@ -280,7 +288,6 @@ namespace gautier.app.rss.reader.ui
 
             _Feeds = BindableFeed.ConvertFeeds(_OriginalFeeds);
 
-            _FeedsGrid.SelectionChanged += FeedsGrid_SelectionChanged;
             _FeedsGrid.ItemsSource = _Feeds;
 
             if (_Feeds.Count > 0)
