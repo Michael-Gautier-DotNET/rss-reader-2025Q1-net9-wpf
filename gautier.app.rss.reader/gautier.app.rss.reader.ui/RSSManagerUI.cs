@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Data.SQLite;
-using System.Security.Policy;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -11,7 +9,6 @@ using System.Windows.Media;
 
 using gautier.app.rss.reader.ui.UIData;
 using gautier.rss.data;
-using gautier.rss.data.RSSDb;
 
 namespace gautier.app.rss.reader.ui
 {
@@ -112,6 +109,8 @@ namespace gautier.app.rss.reader.ui
 
         private ObservableCollection<BindableFeed> _Feeds = new();
 
+        public ObservableCollection<BindableFeed> Feeds => _Feeds;
+
         private readonly DataGrid _FeedsGrid = new()
         {
             VerticalAlignment = VerticalAlignment.Stretch,
@@ -172,9 +171,9 @@ namespace gautier.app.rss.reader.ui
             CFeed.RetrieveLimitHrs = Convert.ToInt32(_RetrieveLimitHrs.Value);
             CFeed.RetentionDays = Convert.ToInt32(_RetentionDays.Value);
 
-            //List<Feed> UpdatedFeeds = BindableFeed.ConvertFeeds(_Feeds);
+            List<Feed> UpdatedFeeds = BindableFeed.ConvertFeeds(_Feeds);
 
-            //FeedDataExchange.WriteRSSFeedToDatabase(FeedConfiguration.FeedDbFilePath, UpdatedFeeds);
+            FeedDataExchange.WriteRSSFeedToDatabase(FeedConfiguration.FeedDbFilePath, UpdatedFeeds);
 
             return;
         }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -115,6 +117,19 @@ namespace gautier.app.rss.reader.ui
         {
             //Show article in system's web browser.
 
+            if (Article != null)
+            {
+                string ArticleUrl = Article.ArticleUrl;
+
+                ProcessStartInfo UrlActivator = new()
+                {
+                    FileName = ArticleUrl,
+                    UseShellExecute = true,
+                };
+
+                Process.Start(UrlActivator);
+            }
+
             return;
         }
 
@@ -124,7 +139,59 @@ namespace gautier.app.rss.reader.ui
 
             RSSManagerUI UI = new();
 
+            _FeedUpdateTimer.Stop();
+
             UI.ShowDialog();
+
+            CheckRSSManagerUIUpdates(UI);
+
+            _FeedUpdateTimer.Start();
+
+            return;
+        }
+
+        private void CheckRSSManagerUIUpdates(RSSManagerUI ui)
+        {
+            ObservableCollection<BindableFeed> BFeeds = ui.Feeds;
+
+            int BFeedCount = BFeeds.Count;
+            int DFeedCount = _Feeds.Count;
+
+            for (int BIndex = 0; BIndex < BFeedCount; BIndex++)
+            {
+                BindableFeed BFeed = BFeeds[BIndex];
+
+                string UpdatedFeedName = BFeed.Name;
+                string OriginalFeedName = BFeed.OriginalName;
+
+                for (int DIndex = 0; DIndex < DFeedCount; DIndex++)
+                {
+                    string FeedName = _Feeds.Keys[DIndex];
+
+                    if (OriginalFeedName == FeedName && UpdatedFeedName != FeedName)
+                    {
+                        ItemCollection Tabs = _ReaderTabs.Items;
+
+                        foreach (TabItem Tab in Tabs)
+                        {
+                            string TabHeader = $"{Tab.Header}";
+
+                            if (TabHeader == FeedName)
+                            {
+                                Tab.Header = UpdatedFeedName;
+                            }
+                        }
+
+                        Feed FeedEntry = _Feeds[FeedName];
+
+                        FeedEntry.FeedName = UpdatedFeedName;
+
+                        _Feeds.Remove(OriginalFeedName);
+
+                        _Feeds[UpdatedFeedName] = FeedEntry;
+                    }
+                }
+            }
 
             return;
         }
@@ -277,7 +344,7 @@ namespace gautier.app.rss.reader.ui
         {
             UIElement[] Els =
             {
-                _ReaderTabs, 
+                _ReaderTabs,
                 _ReaderFeedDetail
             };
 
@@ -305,31 +372,27 @@ namespace gautier.app.rss.reader.ui
 
         private bool IsFeedIndexValid
         {
-            get
-            {
-                return _FeedIndex > -1 && _FeedIndex < _ReaderTabItems.Count;
-            }
+            get => _FeedIndex > -1 && _FeedIndex < _ReaderTabItems.Count;
         }
 
         private TabItem ReaderTab
         {
-            get
-            {
-                return IsFeedIndexValid ? _ReaderTabItems[_FeedIndex] : null;
-            }
+            get => IsFeedIndexValid ? _ReaderTabItems[_FeedIndex] : null;
         }
 
         private ListBox? FeedHeadlines
         {
-            get
-            {
-                return ReaderTab?.Content as ListBox;
-            }
+            get => ReaderTab?.Content as ListBox;
+        }
+
+        private FeedArticle Article
+        {
+            get => FeedHeadlines.SelectedItem as FeedArticle;
         }
 
         private void Headline_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ApplyArticle(FeedHeadlines.SelectedItem as FeedArticle);
+            ApplyArticle(Article);
 
             return;
         }

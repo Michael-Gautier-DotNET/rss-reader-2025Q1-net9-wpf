@@ -10,6 +10,8 @@ namespace gautier.app.rss.reader.ui.UIData
 {
     public class BindableFeed : DependencyObject, INotifyPropertyChanged
     {
+        public static readonly DependencyProperty IdProperty = DependencyProperty.Register("Id", typeof(int), typeof(BindableFeed), new PropertyMetadata(-1));
+
         public static readonly DependencyProperty NameProperty = DependencyProperty.Register("Name", typeof(string), typeof(BindableFeed), new PropertyMetadata(string.Empty));
 
         public static readonly DependencyProperty UrlProperty = DependencyProperty.Register("Url", typeof(string), typeof(BindableFeed), new PropertyMetadata(string.Empty, UrlPropertyChanged));
@@ -22,6 +24,12 @@ namespace gautier.app.rss.reader.ui.UIData
 
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler UrlValidationFailed;
+
+        public int Id
+        {
+            get => int.Parse($"{GetValue(IdProperty)}");
+            set => SetValue(IdProperty, value); 
+        }
 
         public string Name
         {
@@ -105,8 +113,11 @@ namespace gautier.app.rss.reader.ui.UIData
             {
                 BindableFeed BFeed = new()
                 {
+                    Id = FeedEntry.DbId,
                     Name = FeedEntry.FeedName,
                     Url = FeedEntry.FeedUrl,
+                    OriginalName = FeedEntry.FeedName,
+                    OriginalUrl = FeedEntry.FeedUrl,
                     LastRetrieved = DateTime.Parse(FeedEntry.LastRetrieved),
                     RetrieveLimitHrs = int.Parse(FeedEntry.RetrieveLimitHrs),
                     RetentionDays = int.Parse(FeedEntry.RetentionDays),
@@ -124,19 +135,25 @@ namespace gautier.app.rss.reader.ui.UIData
 
             foreach (BindableFeed BFeed in feeds)
             {
-                Feed DFeed = new()
-                {
-                    FeedName = BFeed.Name,
-                    FeedUrl = BFeed.Url,
-                    LastRetrieved = $"{BFeed.LastRetrieved}",
-                    RetrieveLimitHrs = $"{BFeed.RetrieveLimitHrs}",
-                    RetentionDays = $"{BFeed.RetentionDays}",
-                };
+                Feed DFeed = ConvertFeed(BFeed);
 
                 DFeeds.Add(DFeed);
             }
 
             return DFeeds;
+        }
+
+        internal static Feed ConvertFeed(BindableFeed feed)
+        {
+            return new()
+            {
+                DbId = feed.Id,
+                FeedName = feed.Name,
+                FeedUrl = feed.Url,
+                LastRetrieved = $"{feed.LastRetrieved}",
+                RetrieveLimitHrs = $"{feed.RetrieveLimitHrs}",
+                RetentionDays = $"{feed.RetentionDays}",
+            };
         }
     }
 }
