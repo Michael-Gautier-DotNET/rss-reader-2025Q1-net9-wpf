@@ -234,7 +234,7 @@ public static class FeedDataExchange
 
         using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
 
-        foreach(Feed FeedEntry in feeds)
+        foreach (Feed FeedEntry in feeds)
         {
             ModifyFeed(SQLConn, FeedEntry);
         }
@@ -307,8 +307,8 @@ public static class FeedDataExchange
 
         bool HasId = Id > 0;
 
-        bool Exists = HasId ? 
-            FeedReader.Exists(sqlConn, Id) : 
+        bool Exists = HasId ?
+            FeedReader.Exists(sqlConn, Id) :
             FeedReader.Exists(sqlConn, feedHeader.FeedName);
 
         if (Exists == false)
@@ -411,5 +411,32 @@ public static class FeedDataExchange
         }
 
         return;
+    }
+
+    public static bool RemoveFeedFromDatabase(string feedDbFilePath, int feedDbId)
+    {
+        bool IsDeleted = false;
+
+        string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
+
+        using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
+
+        bool Exists = feedDbId > 0 && FeedReader.Exists(SQLConn, feedDbId);
+
+        /*Only Delete if the Feed record exists in the database.*/
+        if (Exists)
+        {
+            Feed FeedEntry = FeedReader.GetFeed(SQLConn, feedDbId);
+
+            FeedArticleWriter.DeleteArticles(SQLConn, FeedEntry.FeedName);
+
+            FeedWriter.DeleteFeedById(SQLConn, feedDbId);
+
+            Exists = FeedReader.Exists(SQLConn, feedDbId);
+
+            IsDeleted = Exists == false;
+        }
+
+        return IsDeleted;
     }
 }
