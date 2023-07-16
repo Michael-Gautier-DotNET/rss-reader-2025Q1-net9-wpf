@@ -56,5 +56,19 @@ namespace gautier.rss.data.RSSDb
 
             return;
         }
+
+        internal static void DeleteFeedById(SQLiteConnection sqlConn, int id)
+        {
+            string CommandText = $"DELETE FROM {FeedReader.TableName} WHERE id = @Id;";
+
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
+            {
+                SQLCmd.Parameters.AddWithValue("@Id", id);
+
+                SQLCmd.ExecuteNonQuery();
+            }
+
+            return;
+        }
     }
 }
