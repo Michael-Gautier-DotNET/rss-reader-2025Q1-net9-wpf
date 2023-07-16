@@ -159,6 +159,11 @@ namespace gautier.app.rss.reader.ui
             _DeleteButton.Click += DeleteButton_Click;
             _SaveButton.Click += SaveButton_Click;
 
+            if (_Feeds.Count > 0)
+            {
+                _FeedsGrid.SelectedIndex = 0;
+            }
+
             return;
         }
 
@@ -180,6 +185,25 @@ namespace gautier.app.rss.reader.ui
 
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
+            BindableFeed CFeed = CurrentFeed;
+
+            Feed DFeed = BindableFeed.ConvertFeed(CFeed);
+
+            if (DFeed != null && DFeed.DbId > 0)
+            {
+                bool IsDeleted = FeedDataExchange.RemoveFeedFromDatabase(FeedConfiguration.FeedDbFilePath, DFeed.DbId);
+
+                if (IsDeleted)
+                {
+                    _Feeds.Remove(CFeed);
+
+                    if (_Feeds.Count > 0)
+                    {
+                        _FeedsGrid.SelectedIndex = 0;
+                    }
+                }
+            }
+
             return;
         }
 
@@ -307,11 +331,6 @@ namespace gautier.app.rss.reader.ui
             _Feeds = BindableFeed.ConvertFeeds(_OriginalFeeds);
 
             _FeedsGrid.ItemsSource = _Feeds;
-
-            if (_Feeds.Count > 0)
-            {
-                _FeedsGrid.SelectedIndex = 0;
-            }
 
             return;
         }
