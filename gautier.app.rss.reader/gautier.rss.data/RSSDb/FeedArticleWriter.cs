@@ -23,9 +23,23 @@ namespace gautier.rss.data.RSSDb
             return;
         }
 
+        internal static void DeleteArticles(SQLiteConnection sqlConn, string feedName)
+        {
+            string CommandText = $"DELETE FROM {FeedArticleReader.TableName} WHERE feed_name = @FeedName;";
+
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
+            {
+                SQLCmd.Parameters.AddWithValue("@FeedName", feedName);
+
+                SQLCmd.ExecuteNonQuery();
+            }
+
+            return;
+        }
+
         internal static void ModifyFeedArticle(SQLiteConnection sqlConn, FeedArticleUnion article)
         {
-            string[] ColumnNames = SQLUtil.StripColumnNames(new(){"id", "feed_name", "article_url"}, _ColumnNames);
+            string[] ColumnNames = SQLUtil.StripColumnNames(new() { "id", "feed_name", "article_url" }, _ColumnNames);
 
             StringBuilder CommandText = SQLUtil.CreateSQLUpdateCMDText(FeedArticleReader.TableName, ColumnNames);
             CommandText.Append("feed_name = @feed_name AND article_url = @article_url;");
