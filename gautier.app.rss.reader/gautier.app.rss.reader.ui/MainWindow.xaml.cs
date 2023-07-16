@@ -157,6 +157,9 @@ namespace gautier.app.rss.reader.ui
             int BFeedCount = BFeeds.Count;
             int DFeedCount = _Feeds.Count;
 
+            /*
+             * Check for feed name changes.
+             */
             for (int BIndex = 0; BIndex < BFeedCount; BIndex++)
             {
                 BindableFeed BFeed = BFeeds[BIndex];
@@ -170,16 +173,11 @@ namespace gautier.app.rss.reader.ui
 
                     if (OriginalFeedName == FeedName && UpdatedFeedName != FeedName)
                     {
-                        ItemCollection Tabs = _ReaderTabs.Items;
+                        TabItem FoundTab = FindRSSFeedTab(FeedName);
 
-                        foreach (TabItem Tab in Tabs)
+                        if ($"{FoundTab.Header}" == FeedName)
                         {
-                            string TabHeader = $"{Tab.Header}";
-
-                            if (TabHeader == FeedName)
-                            {
-                                Tab.Header = UpdatedFeedName;
-                            }
+                            FoundTab.Header = UpdatedFeedName;
                         }
 
                         Feed FeedEntry = _Feeds[FeedName];
@@ -189,6 +187,67 @@ namespace gautier.app.rss.reader.ui
                         _Feeds.Remove(OriginalFeedName);
 
                         _Feeds[UpdatedFeedName] = FeedEntry;
+                    }
+                }
+            }
+
+            /*
+             * Check for deletion.
+             * Check this last since the comparison is done based on name.
+             * The collection SortedList<string, Feed> is updated prior to this process putting it in 
+             * a reliable state for comparison with the database.
+             * 
+             * I could compare the collections ObservableCollection<BindableFeed> vs SortedList<string, Feed>
+             * to detect deletions but when it comes to deleted data, you want to be absolutely sure.
+             * 
+             * Check the database and prune any feeds from the UI not represented in the database.
+             */
+            PruneFeedsFollowingManagementUpdate();
+
+
+
+            return;
+        }
+
+        private TabItem FindRSSFeedTab(string name)
+        {
+            ItemCollection Tabs = _ReaderTabs.Items;
+
+            TabItem FoundTab = new();
+
+            foreach (TabItem Tab in Tabs)
+            {
+                string TabHeader = $"{Tab.Header}";
+
+                if (TabHeader == name)
+                {
+                    FoundTab = Tab;
+
+                    break;
+                }
+            }
+
+            return FoundTab;
+        }
+
+        private void PruneFeedsFollowingManagementUpdate()
+        {
+            SortedList<string, Feed> DbFeeds = FeedDataExchange.GetAllFeeds(FeedConfiguration.SQLiteDbConnectionString);
+
+            List<string> FeedNames = new(_Feeds.Keys);
+
+            foreach (string FeedName in FeedNames)
+            {
+                if (DbFeeds.ContainsKey(FeedName) == false)
+                {
+                    _Feeds.Remove(FeedName);
+
+                    TabItem FoundTab = FindRSSFeedTab(FeedName);
+
+                    if ($"{FoundTab.Header}" == FeedName)
+                    {
+                        _ReaderTabItems.Remove(FoundTab);
+                        _ReaderTabs.Items.Remove(FoundTab);
                     }
                 }
             }
