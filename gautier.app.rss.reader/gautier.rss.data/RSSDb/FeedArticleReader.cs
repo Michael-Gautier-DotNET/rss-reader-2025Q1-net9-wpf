@@ -1,4 +1,5 @@
-﻿using System.Data.SQLite;
+﻿using System.Data;
+using System.Data.SQLite;
 
 namespace gautier.rss.data.RSSDb
 {
@@ -9,6 +10,7 @@ namespace gautier.rss.data.RSSDb
 
         public static string[] TableColumnNames => new string[]
         {
+            "id",
             "feed_name",
             "headline_text",
             "article_summary",
@@ -84,10 +86,13 @@ namespace gautier.rss.data.RSSDb
             foreach (var ColumnName in columnNames)
             {
                 string ParamName = $"@{ColumnName}";
-                string ParamValue = string.Empty;
+                object? ParamValue = string.Empty;
 
                 switch (ColumnName)
                 {
+                    case "id":
+                        ParamValue = article.DbId;
+                        break;
                     case "feed_name":
                         ParamValue = $"{article.FeedName}";
                         break;
@@ -111,7 +116,12 @@ namespace gautier.rss.data.RSSDb
                         break;
                 }
 
-                cmd.Parameters.AddWithValue(ParamName, ParamValue);
+                SQLiteParameter Param = cmd.Parameters.AddWithValue(ParamName, ParamValue);
+
+                if (ColumnName == "id")
+                {
+                    Param.DbType = DbType.Int32;
+                }
             }
 
             return;
@@ -159,39 +169,44 @@ namespace gautier.rss.data.RSSDb
 
             while (reader.Read())
             {
-                var FeedName = string.Empty;
-                var HeadlineText = string.Empty;
-                var ArticleSummary = string.Empty;
-                var ArticleText = string.Empty;
-                var ArticleDate = string.Empty;
-                var ArticleUrl = string.Empty;
-                var RowInsertDateTime = string.Empty;
+                int Id = -1;
+                string FeedName = string.Empty;
+                string HeadlineText = string.Empty;
+                string ArticleSummary = string.Empty;
+                string ArticleText = string.Empty;
+                string ArticleDate = string.Empty;
+                string ArticleUrl = string.Empty;
+                string RowInsertDateTime = string.Empty;
 
                 for (var ColI = 0; ColI < ColCount; ColI++)
                 {
+                    string ColName = reader.GetName(ColI);
                     object ColValue = reader.GetValue(ColI);
 
-                    switch (ColI)
+                    switch (ColName)
                     {
-                        case 0: //feed_name
+                        case "id":
+                            Id = reader.GetInt32(ColI);
+                            break;
+                        case "feed_name":
                             FeedName = $"{ColValue}";
                             break;
-                        case 1://headline_text
+                        case "headline_text":
                             HeadlineText = $"{ColValue}";
                             break;
-                        case 2://article_summary
+                        case "article_summary":
                             ArticleSummary = $"{ColValue}";
                             break;
-                        case 3://article_text
+                        case "article_text":
                             ArticleText = $"{ColValue}";
                             break;
-                        case 4://article_date
+                        case "article_date":
                             ArticleDate = $"{ColValue}";
                             break;
-                        case 5://article_url
+                        case "article_url":
                             ArticleUrl = $"{ColValue}";
                             break;
-                        case 6://row_insert_date_time
+                        case "row_insert_date_time":
                             RowInsertDateTime = $"{ColValue}";
                             break;
                     }
@@ -199,13 +214,14 @@ namespace gautier.rss.data.RSSDb
 
                 FeedArticle FeedEntry = new()
                 {
+                    DbId = Id,
                     FeedName = FeedName,
                     HeadlineText = HeadlineText,
                     ArticleSummary = ArticleSummary,
                     ArticleText = ArticleText,
                     ArticleDate = ArticleDate,
                     ArticleUrl = ArticleUrl,
-                    RowInsertDateTime = RowInsertDateTime
+                    RowInsertDateTime = RowInsertDateTime,
                 };
 
                 rows.Add(FeedEntry);

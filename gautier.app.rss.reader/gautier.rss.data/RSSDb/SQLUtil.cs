@@ -81,5 +81,25 @@ namespace gautier.rss.data.RSSDb
             return CommandText;
         }
 
+        internal static string[] StripColumnByName(string columnName, string[] columnNames)
+        {
+            List<string> Cols = new(columnNames);
+            Cols.Remove(columnName);
+
+            return Cols.ToArray();
+        }
+
+        internal static string[] StripColumnNames(List<string> columnNamesToRemove, string[] columnNames)
+        {
+            List<string> Cols = new(columnNames);
+
+            foreach (string ColumnName in columnNamesToRemove)
+            {
+                Cols.Remove(ColumnName);
+            }
+
+            return Cols.ToArray();
+        }
+
     }
 }

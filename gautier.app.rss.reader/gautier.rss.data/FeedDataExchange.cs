@@ -200,6 +200,8 @@ public static class FeedDataExchange
             }
         }
 
+        Console.WriteLine($"\t\tUpdating SQLite database | {feedDbFilePath}");
+
         WriteRSSArticlesToDatabase(feedDbFilePath, FeedsArticles);
 
         return;
@@ -301,7 +303,13 @@ public static class FeedDataExchange
 
     private static void ModifyFeed(SQLiteConnection sqlConn, Feed feedHeader)
     {
-        bool Exists = FeedReader.Exists(sqlConn, feedHeader.FeedName);
+        int Id = feedHeader.DbId;
+
+        bool HasId = Id > 0;
+
+        bool Exists = HasId ? 
+            FeedReader.Exists(sqlConn, Id) : 
+            FeedReader.Exists(sqlConn, feedHeader.FeedName);
 
         if (Exists == false)
         {
@@ -309,7 +317,24 @@ public static class FeedDataExchange
         }
         else
         {
-            FeedWriter.ModifyFeed(sqlConn, feedHeader);
+            if (HasId)
+            {
+                Feed FeedEntry = FeedReader.GetFeed(sqlConn, Id);
+
+                string FeedNameCurrent = FeedEntry.FeedName;
+                string FeedNameProposed = feedHeader.FeedName;
+
+                if (FeedNameCurrent != FeedNameProposed)
+                {
+                    FeedArticleWriter.ModifyFeedArticleKey(sqlConn, FeedNameCurrent, FeedNameProposed);
+                }
+
+                FeedWriter.ModifyFeedById(sqlConn, feedHeader);
+            }
+            else
+            {
+                FeedWriter.ModifyFeed(sqlConn, feedHeader);
+            }
         }
 
         return;

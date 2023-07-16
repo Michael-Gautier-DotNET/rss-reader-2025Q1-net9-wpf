@@ -1,6 +1,7 @@
 ﻿using System.Data.SQLite;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using System.ServiceModel.Syndication;
 using System.Text;
 
@@ -93,10 +94,17 @@ namespace gautier.rss.data
 
                     DateTime FeedRenewalDateTime = LastRetrievedDateTime.AddHours(RetrieveLimitHrs);
 
+                    Console.WriteLine($"Feed: {FeedInfo.FeedName} | Feed Renewal Date: {FeedRenewalDateTime} vs Recent Date: {RecentDateTime}");
+                    Console.WriteLine($"\t\tUpdate Frequency: {FeedInfo.RetrieveLimitHrs} Hrs | Retention Days: {FeedInfo.RetentionDays} | Last Retrieved: {LastRetrievedDateTime}");
+
                     if (RecentDateTime > FeedRenewalDateTime)
                     {
+                        Console.WriteLine(@"********* Feed released for update.");
+
                         if (File.Exists(FeedFilePath) == false)
                         {
+                            Console.WriteLine(@"********* Feed cache file will be created.");
+
                             ShouldCacheFileBeCreated = true;
                         }
                     }
@@ -111,6 +119,9 @@ namespace gautier.rss.data
                  */
                 if (ShouldCacheFileBeCreated)
                 {
+                    Console.WriteLine($"Creating a Cached XML file for feed: {FeedInfo.FeedName} {FeedInfo.FeedUrl}");
+                    Console.WriteLine($"\t\t\t{FeedFilePath}");
+
                     RSSNetClient.CreateRSSFeedFile(FeedInfo.FeedUrl, FeedFilePath);
                 }
             }
@@ -161,42 +172,14 @@ namespace gautier.rss.data
 
                 RSSFeedFile.Flush();
                 RSSFeedFile.Close();
+
+                Console.WriteLine($"\t\tMade TXT tab-delimited cached file | {feedInfo.FeedName}:");
+                Console.WriteLine($"\t\t\t\t{NormalizedFeedFilePath}");
             }
 
             RSSFeedFileOutput.Clear();
 
             return;
-        }
-
-        private static SortedList<string, List<FeedArticle>> TransformMSSyndicationToFeedArticles(string feedSaveDirectoryPath, Feed[] feedInfos)
-        {
-            SortedList<string, List<FeedArticle>> FeedArticles = new();
-
-            foreach (var FeedInfo in feedInfos)
-            {
-                string RSSFeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, FeedInfo);
-
-                SyndicationFeed RSSFeed = RSSNetClient.CreateRSSSyndicationFeed(RSSFeedFilePath);
-
-                if (RSSFeed.Items.Any())
-                {
-                    if (FeedArticles.ContainsKey(FeedInfo.FeedName) == false)
-                    {
-                        FeedArticles[FeedInfo.FeedName] = new();
-                    }
-
-                    List<FeedArticle> Articles = FeedArticles[FeedInfo.FeedName];
-
-                    foreach (var RSSItem in RSSFeed.Items)
-                    {
-                        FeedArticle FeedItem = CreateRSSFeedArticle(FeedInfo, RSSItem);
-
-                        Articles.Add(FeedItem);
-                    }
-                }
-            }
-
-            return FeedArticles;
         }
 
         private static SortedList<string, List<FeedArticle>> TransformXmlFeedToFeedArticles(string feedSaveDirectoryPath, Feed[] feedInfos)
@@ -228,77 +211,6 @@ namespace gautier.rss.data
             }
 
             return FeedArticles;
-        }
-
-        private static FeedArticle CreateRSSFeedArticle(Feed feed, SyndicationItem syndicate)
-        {
-            string ArticleText = string.Empty;
-            string ContentType = $"{syndicate.Content?.Type}";
-
-            switch (ContentType)
-            {
-                case "TextSyndicationContent":
-                    {
-                        TextSyndicationContent? Content = syndicate.Content as TextSyndicationContent;
-
-                        ArticleText = Content?.Text ?? string.Empty;
-                    }
-                    break;
-                case "UrlSyndicationContent":
-                    {
-                        UrlSyndicationContent? Content = syndicate.Content as UrlSyndicationContent;
-
-                        ArticleText = Content?.Url.AbsoluteUri ?? string.Empty;
-                    }
-                    break;
-                case "XmlSyndicationContent":
-                    {
-                        XmlSyndicationContent? Content = syndicate.Content as XmlSyndicationContent;
-
-                        ArticleText = Content?.ToString() ?? string.Empty;
-                    }
-                    break;
-                default:
-                    if (feed.FeedName == "Ars Technica" && Debugger.IsAttached)
-                    {
-                        Debugger.Break();
-                    }
-                    break;
-            }
-
-            if (feed.FeedName == "Ars Technica" && string.IsNullOrWhiteSpace(ArticleText) && Debugger.IsAttached)
-            {
-                Debugger.Break();
-            }
-
-            string ArticleUrl = string.Empty;
-
-            foreach (var Url in syndicate.Links)
-            {
-                ArticleUrl = $"{Url.GetAbsoluteUri()}";
-
-                break;
-            }
-
-            DateTime ArticleDate = syndicate.PublishDate.LocalDateTime;
-
-            if (ArticleDate.Year < 0002)
-            {
-                ArticleDate = syndicate.LastUpdatedTime.LocalDateTime;
-            }
-
-            string ArticleDateText = ArticleDate.ToString(_InvariantFormat.UniversalSortableDateTimePattern);
-
-            return new FeedArticle
-            {
-                FeedName = feed.FeedName,
-                HeadlineText = syndicate.Title.Text,
-                ArticleSummary = syndicate.Summary.Text,
-                ArticleText = ArticleText,
-                ArticleDate = ArticleDateText,
-                ArticleUrl = ArticleUrl,
-                RowInsertDateTime = DateTime.Now.ToString(_InvariantFormat.UniversalSortableDateTimePattern)
-            };
         }
 
         private static FeedArticle CreateRSSFeedArticle(Feed feed, XArticle article)

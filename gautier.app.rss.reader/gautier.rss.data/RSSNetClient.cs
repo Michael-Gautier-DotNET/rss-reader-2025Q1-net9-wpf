@@ -1,9 +1,7 @@
-﻿using System.ServiceModel.Syndication;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Xml;
 
 using gautier.rss.data.FeedXml;
-using gautier.rss.data.RDFConversionXD;
 
 namespace gautier.rss.data
 {
@@ -14,41 +12,20 @@ namespace gautier.rss.data
     {
         public static void CreateRSSFeedFile(string feedUrl, string rssFeedFilePath)
         {
-            using XmlReader feedXml = XmlReader.Create(feedUrl);
-
-            using XmlWriter feedXmlWriter = XmlWriter.Create(rssFeedFilePath);
-
-            feedXmlWriter.WriteNode(feedXml, false);
-
-            return;
-        }
-
-        public static SyndicationFeed CreateRSSSyndicationFeed(string rssFeedFilePath)
-        {
-            SyndicationFeed RSSFeed = new();
-
-            if (File.Exists(rssFeedFilePath) == true)
+            try
             {
-                try
-                {
-                    using XmlReader RSSXmlFile = XmlReader.Create(rssFeedFilePath);
+                using XmlReader feedXml = XmlReader.Create(feedUrl);
 
-                    RSSFeed = SyndicationFeed.Load(RSSXmlFile);
-                }
-                catch (XmlException xmlE)
-                {
-                    bool ExceptionContainsRDF = xmlE.Message.Contains("'RDF'");
-                    bool ExceptionContainsInvalidFormat = xmlE.Message.Contains("not an allowed feed format");
+                using XmlWriter feedXmlWriter = XmlWriter.Create(rssFeedFilePath);
 
-                    if (ExceptionContainsRDF && ExceptionContainsInvalidFormat)
-                    {
-                        RSSFeed = SyndicationConverter.ConvertToSyndicationFeed(rssFeedFilePath);
-                    }
-                }
-
+                feedXmlWriter.WriteNode(feedXml, false);
+            }
+            catch (HttpRequestException httpE)
+            {
+                Console.WriteLine(httpE.Message);
             }
 
-            return RSSFeed;
+            return;
         }
 
         public static XFeed CreateRSSXFeed(string rssFeedFilePath)

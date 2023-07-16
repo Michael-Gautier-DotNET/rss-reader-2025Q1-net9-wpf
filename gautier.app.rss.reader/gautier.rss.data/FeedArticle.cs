@@ -5,6 +5,7 @@ namespace gautier.rss.data;
 [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
 public class FeedArticle
 {
+    public int DbId { get; set; } = -1;
     public string FeedName { get; set; } = string.Empty;
     public string HeadlineText { get; set; } = string.Empty;
     public string ArticleSummary { get; set; } = string.Empty;
