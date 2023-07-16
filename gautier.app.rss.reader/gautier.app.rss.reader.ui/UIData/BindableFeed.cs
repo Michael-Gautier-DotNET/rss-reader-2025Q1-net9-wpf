@@ -28,7 +28,7 @@ namespace gautier.app.rss.reader.ui.UIData
         public int Id
         {
             get => int.Parse($"{GetValue(IdProperty)}");
-            set => SetValue(IdProperty, value); 
+            set => SetValue(IdProperty, value);
         }
 
         public string Name
