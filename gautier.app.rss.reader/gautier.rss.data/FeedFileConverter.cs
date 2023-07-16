@@ -1,8 +1,5 @@
 ﻿using System.Data.SQLite;
-using System.Diagnostics;
 using System.Globalization;
-using System.Reflection;
-using System.ServiceModel.Syndication;
 using System.Text;
 
 using gautier.rss.data.FeedXml;
