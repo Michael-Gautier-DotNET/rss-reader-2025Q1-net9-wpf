@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -42,12 +43,12 @@ namespace gautier.app.rss.reader.ui
         private SortedList<string, FeedArticle> _FeedsArticles = null;
         private int _FeedIndex = -1;
 
-        private readonly TimeSpan _QuickTimeSpan = TimeSpan.FromSeconds(1);
-        private readonly TimeSpan _MidTimeSpan = TimeSpan.FromMinutes(1);
+        private readonly TimeSpan _QuickTimeSpan = TimeSpan.FromSeconds(4);
+        private readonly TimeSpan _MidTimeSpan = TimeSpan.FromSeconds(44);
 
         private DispatcherTimer _FeedUpdateTimer;
 
-        private readonly BackgroundWorker _WindowInitializationTask = new();
+        private readonly BackgroundWorker _FeedUpdateTask = new();
 
         private readonly StackPanel _ReaderOptionsPanel = new()
         {
@@ -102,8 +103,8 @@ namespace gautier.app.rss.reader.ui
 
             _FeedUpdateTimer.Tick += UpdateFeedsOnInterval;
 
-            _WindowInitializationTask.DoWork += WindowInitializationTask_DoWork;
-            _WindowInitializationTask.RunWorkerCompleted += WindowInitializationTask_RunWorkerCompleted;
+            _FeedUpdateTask.DoWork += FeedUpdateTask_DoWork;
+            _FeedUpdateTask.RunWorkerCompleted += FeedUpdateTask_RunWorkerCompleted;
 
             _FeedUpdateTimer.Start();
 
@@ -204,8 +205,6 @@ namespace gautier.app.rss.reader.ui
              */
             PruneFeedsFollowingManagementUpdate();
 
-
-
             return;
         }
 
@@ -266,24 +265,26 @@ namespace gautier.app.rss.reader.ui
                 _FeedUpdateTimer.Interval = _MidTimeSpan;
             }
 
-            _WindowInitializationTask.RunWorkerAsync();
+            _FeedUpdateTask.RunWorkerAsync();
 
             return;
         }
 
-        private void WindowInitializationTask_DoWork(object sender, DoWorkEventArgs e)
+        private void FeedUpdateTask_DoWork(object sender, DoWorkEventArgs e)
         {
             _Feeds = FeedDataExchange.GetAllFeeds(FeedConfiguration.SQLiteDbConnectionString);
 
             if (_FeedsInitialized)
             {
+                _FeedUpdateTimer?.Stop();
+
                 DownloadFeeds();
             }
 
             return;
         }
 
-        private void WindowInitializationTask_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private void FeedUpdateTask_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             Action UIThreadAction = () =>
             {
@@ -313,7 +314,7 @@ namespace gautier.app.rss.reader.ui
 
             if (_FeedUpdateTimer?.IsEnabled == false)
             {
-                _FeedUpdateTimer?.Stop();
+                _FeedUpdateTimer?.Start();
             }
 
             return;
@@ -494,7 +495,7 @@ namespace gautier.app.rss.reader.ui
                 {
                     _FeedsArticles = FeedDataExchange.GetFeedArticles(FeedConfiguration.SQLiteDbConnectionString, FeedName);
 
-                    var IndexedFeedArticles = _FeedsArticles.Values;
+                    ObservableCollection<FeedArticle> IndexedFeedArticles = new(_FeedsArticles.Values);
 
                     FeedHeadlines.ItemsSource = IndexedFeedArticles;
                 }
@@ -509,13 +510,34 @@ namespace gautier.app.rss.reader.ui
         {
             Feed[] FeedEntries = new List<Feed>(_Feeds.Values).ToArray();
 
-            FeedEntries = FeedDataExchange.MergeFeedEntries(FeedConfiguration.FeedDbFilePath, FeedEntries);
+            foreach (Feed FeedEntry in FeedEntries)
+            {
+                bool FeedCanBeUpdated = RSSNetClient.CheckFeedIsEligibleForUpdate(FeedEntry);
 
-            FeedFileConverter.CreateStaticFeedFiles(FeedConfiguration.FeedSaveDirectoryPath, FeedConfiguration.FeedDbFilePath, FeedEntries);
+                if (FeedCanBeUpdated)
+                {
+                    DownloadFeed(FeedEntry);
+                }
+            }
 
-            FeedFileConverter.TransformStaticFeedFiles(FeedConfiguration.FeedSaveDirectoryPath, FeedEntries);
+            return;
+        }
 
-            FeedDataExchange.ImportStaticFeedFilesToDatabase(FeedConfiguration.FeedSaveDirectoryPath, FeedConfiguration.FeedDbFilePath, FeedEntries);
+        private static void DownloadFeed(Feed feed)
+        {
+            string RSSXmlFilePath = RSSNetClient.DownloadFeed(FeedConfiguration.FeedSaveDirectoryPath, feed);
+
+            if (File.Exists(RSSXmlFilePath))
+            {
+                List<FeedArticle> Articles = FeedFileConverter.TransformXmlFeedToFeedArticles(FeedConfiguration.FeedSaveDirectoryPath, feed);
+
+                string RSSTabDelimitedFilePath = FeedFileConverter.WriteRSSArticlesToFile(FeedConfiguration.FeedSaveDirectoryPath, feed, Articles);
+
+                if (File.Exists(RSSTabDelimitedFilePath))
+                {
+                    FeedDataExchange.ImportRSSFeedToDatabase(FeedConfiguration.FeedSaveDirectoryPath, FeedConfiguration.FeedDbFilePath, feed);
+                }
+            }
 
             return;
         }
@@ -528,29 +550,50 @@ namespace gautier.app.rss.reader.ui
             {
                 Feed FeedEntry = _Feeds[FeedName];
 
-                Console.WriteLine($"Feed:\t{FeedName}");
-                Console.WriteLine($"\t\tLast Retrieved {FeedEntry.LastRetrieved} from {FeedEntry.FeedUrl}");
-                Console.WriteLine($"\t\t\tConfiguration: Retrieve Limit Hrs {FeedEntry.RetrieveLimitHrs}, Retention Days {FeedEntry.RetentionDays}");
-                /*
-                 * Output article information.
-                 */
-
                 SortedList<string, FeedArticle> Articles = FeedDataExchange.GetFeedArticles(FeedConfiguration.SQLiteDbConnectionString, FeedName);
 
                 List<string> ArticleUrls = new(Articles.Keys);
 
-                foreach (string ArticleUrl in ArticleUrls)
-                {
-                    FeedArticle Article = Articles[ArticleUrl];
+                TabItem FoundTab = FindRSSFeedTab(FeedName);
 
-                    Console.WriteLine($"URL: {ArticleUrl}");
-                    Console.WriteLine($"\t\tHeadline: {Article.HeadlineText}");
-                    /*Console.WriteLine($"\t\t\t\tText: {Article.ArticleSummary}");*/
-                    Console.WriteLine($"\n\n\n");
+                ListBox ArticlesUI = FoundTab?.Content as ListBox;
+
+                ObservableCollection<FeedArticle> IndexedFeedArticles = ArticlesUI.ItemsSource as ObservableCollection<FeedArticle>;
+
+                if (IndexedFeedArticles != null)
+                {
+                    foreach (string ArticleUrl in ArticleUrls)
+                    {
+                        bool Found = ContainsArticleUrl(IndexedFeedArticles, ArticleUrl);
+
+                        if (Found == false)
+                        {
+                            FeedArticle Article = Articles[ArticleUrl];
+
+                            IndexedFeedArticles.Add(Article);
+                        }
+                    }
                 }
             }
 
             return;
+        }
+
+        private static bool ContainsArticleUrl(IList<FeedArticle> articles, string articleUrl)
+        {
+            bool Found = false;
+
+            foreach (FeedArticle Article in articles)
+            {
+                Found = string.Equals(Article.ArticleUrl, articleUrl, StringComparison.InvariantCultureIgnoreCase);
+
+                if (Found)
+                {
+                    break;
+                }
+            }
+
+            return Found;
         }
     }
 }
