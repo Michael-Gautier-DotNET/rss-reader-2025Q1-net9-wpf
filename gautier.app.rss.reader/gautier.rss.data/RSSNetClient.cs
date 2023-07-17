@@ -1,7 +1,10 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Xml;
 
 using gautier.rss.data.FeedXml;
+
+using RestSharp;
 
 namespace gautier.rss.data
 {
@@ -10,6 +13,55 @@ namespace gautier.rss.data
     /// </summary>
     public static class RSSNetClient
     {
+        private static readonly DateTimeFormatInfo _InvariantFormat = DateTimeFormatInfo.InvariantInfo;
+
+        public static bool CheckFeedIsEligibleForUpdate(Feed feed)
+        {
+            bool FeedIsEligibleForUpdate = false;
+
+            bool RetrieveLimitIsValid = int.TryParse(feed.RetrieveLimitHrs, out int RetrieveLimitHrs);
+
+            if (RetrieveLimitIsValid)
+            {
+                bool LastRetrievedFormatIsValid = DateTime.TryParseExact(feed.LastRetrieved, _InvariantFormat.UniversalSortableDateTimePattern, _InvariantFormat, DateTimeStyles.None, out DateTime LastRetrievedDateTime);
+
+                if (LastRetrievedFormatIsValid)
+                {
+                    DateTime FeedRenewalDateTime = LastRetrievedDateTime.AddHours(RetrieveLimitHrs);
+
+                    DateTime RecentDateTime = DateTime.Now;
+
+                    Console.WriteLine($"Feed: {feed.FeedName} | Feed Renewal Date: {FeedRenewalDateTime} vs Recent Date: {RecentDateTime}");
+                    Console.WriteLine($"\t\tUpdate Frequency: {feed.RetrieveLimitHrs} Hrs | Retention Days: {feed.RetentionDays} | Last Retrieved: {LastRetrievedDateTime}");
+
+                    FeedIsEligibleForUpdate = (RecentDateTime > FeedRenewalDateTime);
+                }
+            }
+
+            return FeedIsEligibleForUpdate;
+        }
+
+        public static string DownloadFeed(string fileDownloadDirectoryPath, Feed feed)
+        {
+            string FilePath = Path.Combine(fileDownloadDirectoryPath, $"{feed.FeedName}.xml");
+
+            if (File.Exists(FilePath) == false)
+            {
+                string Url = feed.FeedUrl;
+
+                RestClient HttpHandle = new(Url);
+                RestRequest HttpRequest = new();
+
+                RestResponse HttpResponse = HttpHandle.Execute(HttpRequest);
+
+                string? Content = HttpResponse.Content;
+
+                File.WriteAllText(FilePath, Content);
+            }
+
+            return FilePath;
+        }
+
         public static void CreateRSSFeedFile(string feedUrl, string rssFeedFilePath)
         {
             try
