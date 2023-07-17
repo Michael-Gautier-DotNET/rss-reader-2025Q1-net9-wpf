@@ -81,20 +81,9 @@ namespace gautier.rss.data
                     that situation must still be respected to avoid future access issues.
                  */
                 {
-                    DateTime RecentDateTime = DateTime.Now;
+                    bool FeedCanBeUpdated = RSSNetClient.CheckFeedIsEligibleForUpdate(FeedInfo);
 
-                    int RetrieveLimitHrs;
-                    int.TryParse(FeedInfo.RetrieveLimitHrs, out RetrieveLimitHrs);
-
-                    DateTime LastRetrievedDateTime;
-                    DateTime.TryParseExact(FeedInfo.LastRetrieved, _InvariantFormat.UniversalSortableDateTimePattern, _InvariantFormat, DateTimeStyles.None, out LastRetrievedDateTime);
-
-                    DateTime FeedRenewalDateTime = LastRetrievedDateTime.AddHours(RetrieveLimitHrs);
-
-                    Console.WriteLine($"Feed: {FeedInfo.FeedName} | Feed Renewal Date: {FeedRenewalDateTime} vs Recent Date: {RecentDateTime}");
-                    Console.WriteLine($"\t\tUpdate Frequency: {FeedInfo.RetrieveLimitHrs} Hrs | Retention Days: {FeedInfo.RetentionDays} | Last Retrieved: {LastRetrievedDateTime}");
-
-                    if (RecentDateTime > FeedRenewalDateTime)
+                    if (FeedCanBeUpdated)
                     {
                         Console.WriteLine(@"********* Feed released for update.");
 
@@ -126,11 +115,11 @@ namespace gautier.rss.data
             return;
         }
 
-        public static void TransformStaticFeedFiles(string feedSaveDirectoryPath, Feed[] feedInfos)
+        public static void TransformStaticFeedFiles(string feedSaveDirectoryPath, Feed[] feeds)
         {
-            SortedList<string, List<FeedArticle>> Feeds = TransformXmlFeedToFeedArticles(feedSaveDirectoryPath, feedInfos);
+            SortedList<string, List<FeedArticle>> Feeds = TransformXmlFeedToFeedArticles(feedSaveDirectoryPath, feeds);
 
-            foreach (var FeedInfo in feedInfos)
+            foreach (var FeedInfo in feeds)
             {
                 if (Feeds.ContainsKey(FeedInfo.FeedName) == false)
                 {
@@ -143,14 +132,14 @@ namespace gautier.rss.data
             return;
         }
 
-        private static void WriteRSSArticlesToFile(string feedSaveDirectoryPath, Feed feedInfo, List<FeedArticle> feedArticles)
+        public static string WriteRSSArticlesToFile(string feedSaveDirectoryPath, Feed feed, List<FeedArticle> articles)
         {
             StringBuilder RSSFeedFileOutput = new();
-            string NormalizedFeedFilePath = GetNormalizedFeedFilePath(feedSaveDirectoryPath, feedInfo);
+            string NormalizedFeedFilePath = GetNormalizedFeedFilePath(feedSaveDirectoryPath, feed);
 
             using (StreamWriter RSSFeedFile = new(NormalizedFeedFilePath, false))
             {
-                foreach (var Article in feedArticles)
+                foreach (var Article in articles)
                 {
                     string HeadlineText = Article.HeadlineText;
                     string ArticleSummary = Article.ArticleSummary;
@@ -170,44 +159,45 @@ namespace gautier.rss.data
                 RSSFeedFile.Flush();
                 RSSFeedFile.Close();
 
-                Console.WriteLine($"\t\tMade TXT tab-delimited cached file | {feedInfo.FeedName}:");
+                Console.WriteLine($"\t\tMade TXT tab-delimited cached file | {feed.FeedName}:");
                 Console.WriteLine($"\t\t\t\t{NormalizedFeedFilePath}");
             }
 
             RSSFeedFileOutput.Clear();
 
-            return;
+            return NormalizedFeedFilePath;
         }
 
-        private static SortedList<string, List<FeedArticle>> TransformXmlFeedToFeedArticles(string feedSaveDirectoryPath, Feed[] feedInfos)
+        public static SortedList<string, List<FeedArticle>> TransformXmlFeedToFeedArticles(string feedSaveDirectoryPath, Feed[] feeds)
         {
             SortedList<string, List<FeedArticle>> FeedArticles = new();
 
-            foreach (var FeedInfo in feedInfos)
+            foreach (var FeedInfo in feeds)
             {
-                string RSSFeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, FeedInfo);
+                List<FeedArticle> Articles = TransformXmlFeedToFeedArticles(feedSaveDirectoryPath, FeedInfo);
 
-                XFeed RSSFeed = RSSNetClient.CreateRSSXFeed(RSSFeedFilePath);
-
-                if (RSSFeed.Articles.Count > 0)
-                {
-                    if (FeedArticles.ContainsKey(FeedInfo.FeedName) == false)
-                    {
-                        FeedArticles[FeedInfo.FeedName] = new();
-                    }
-
-                    List<FeedArticle> Articles = FeedArticles[FeedInfo.FeedName];
-
-                    foreach (var RSSItem in RSSFeed.Articles)
-                    {
-                        FeedArticle FeedItem = CreateRSSFeedArticle(FeedInfo, RSSItem);
-
-                        Articles.Add(FeedItem);
-                    }
-                }
+                FeedArticles[FeedInfo.FeedName] = Articles;
             }
 
             return FeedArticles;
+        }
+
+        public static List<FeedArticle> TransformXmlFeedToFeedArticles(string feedSaveDirectoryPath, Feed feed)
+        {
+            List<FeedArticle> Articles = new();
+
+            string RSSFeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, feed);
+
+            XFeed RSSFeed = RSSNetClient.CreateRSSXFeed(RSSFeedFilePath);
+
+            foreach (var RSSItem in RSSFeed.Articles)
+            {
+                FeedArticle FeedItem = CreateRSSFeedArticle(feed, RSSItem);
+
+                Articles.Add(FeedItem);
+            }
+
+            return Articles;
         }
 
         private static FeedArticle CreateRSSFeedArticle(Feed feed, XArticle article)

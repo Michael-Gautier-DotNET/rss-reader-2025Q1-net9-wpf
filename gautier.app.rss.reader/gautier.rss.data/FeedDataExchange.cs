@@ -84,127 +84,152 @@ public static class FeedDataExchange
         return Articles;
     }
 
-    public static void ImportStaticFeedFilesToDatabase(string feedSaveDirectoryPath, string feedDbFilePath, Feed[] feedInfos)
+    public static void ImportStaticFeedFilesToDatabase(string feedSaveDirectoryPath, string feedDbFilePath, Feed[] feeds)
     {
         SortedList<string, List<FeedArticleUnion>> FeedsArticles = new();
+
+        foreach (Feed FeedEntry in feeds)
+        {
+            List<FeedArticleUnion> Articles = ImportRSSFeedToDatabase(feedSaveDirectoryPath, feedDbFilePath, FeedEntry);
+
+            FeedsArticles[FeedEntry.FeedName] = Articles;
+        }
+
+        Console.WriteLine($"\t\tUpdated SQLite database | {feedDbFilePath}");
+
+        return;
+    }
+
+    public static List<FeedArticleUnion> ImportRSSFeedToDatabase(string feedSaveDirectoryPath, string feedDbFilePath, Feed feed)
+    {
+        List<FeedArticleUnion> Articles = new();
 
         DateTime ModificationDateTime = DateTime.Now;
         string ModificationDateTimeText = ModificationDateTime.ToString(_InvariantFormat.UniversalSortableDateTimePattern);
 
-        foreach (Feed FeedHeader in feedInfos)
+        feed.LastRetrieved = ModificationDateTimeText;
+        feed.RetrieveLimitHrs = "1";
+        feed.RetentionDays = "45";
+
+        string filePath = GetNormalizedFeedFilePath(feedSaveDirectoryPath, feed);
+
+        if (File.Exists(filePath))
         {
-            FeedHeader.LastRetrieved = ModificationDateTimeText;
-            FeedHeader.RetrieveLimitHrs = "1";
-            FeedHeader.RetentionDays = "45";
+            using StreamReader LineReader = new(filePath);
 
-            string filePath = GetNormalizedFeedFilePath(feedSaveDirectoryPath, FeedHeader);
+            string FileLine = string.Empty;
+            string PreviousURL = string.Empty;
 
-            if (File.Exists(filePath) == false)
+            FeedArticleUnion FeedArticlePair = new();
+
+            bool InText = false;
+            List<string> LineHeaders = new()
             {
-                continue;
-            }
+                "URL",
+                "DATE",
+                "HEAD",
+                "TEXT",
+                "SUM",
+            };
 
-            using (StreamReader LineReader = new(filePath))
+            while (LineReader.EndOfStream == false && (FileLine = LineReader.ReadLine() ?? string.Empty) is not null)
             {
-                string FileLine = string.Empty;
-                string PreviousURL = string.Empty;
-
-                FeedArticleUnion FeedArticlePair = new();
-
-                bool InText = false;
-                List<string> LineHeaders = new()
+                if (string.IsNullOrWhiteSpace(FileLine))
                 {
-                    "URL",
-                    "DATE",
-                    "HEAD",
-                    "TEXT",
-                    "SUM",
-                };
+                    continue;
+                }
 
-                while (LineReader.EndOfStream == false && (FileLine = LineReader.ReadLine() ?? string.Empty) is not null)
+                string Col1 = string.Empty;
+                string Col2 = string.Empty;
+
+                if (FileLine.Contains(_Tab))
                 {
-                    if (string.IsNullOrWhiteSpace(FileLine))
+                    Col1 = FileLine.Substring(0, FileLine.IndexOf(_Tab));
+                    Col2 = FileLine.Substring(FileLine.IndexOf(_Tab) + 1);
+                }
+
+                if (LineHeaders.Contains(Col1))
+                {
+                    InText = false;
+                }
+
+                if (Col1 == "SUM")
+                {
+                    FeedArticlePair.ArticleDetail.ArticleSummary = Col2;
+                }
+
+                if (Col1 == "TEXT")
+                {
+                    InText = true;
+
+                    FeedArticlePair.ArticleDetail.ArticleText = Col2;
+                }
+
+                if (LineHeaders.Contains(Col1) == false && InText)
+                {
+                    FeedArticlePair.ArticleDetail.ArticleText += FileLine;
+                }
+
+                if (Col1 == "URL" && PreviousURL != Col2)
+                {
+                    FeedArticlePair = new FeedArticleUnion
                     {
-                        continue;
-                    }
-
-                    string Col1 = string.Empty;
-                    string Col2 = string.Empty;
-
-                    if (FileLine.Contains(_Tab))
-                    {
-                        Col1 = FileLine.Substring(0, FileLine.IndexOf(_Tab));
-                        Col2 = FileLine.Substring(FileLine.IndexOf(_Tab) + 1);
-                    }
-
-                    if (LineHeaders.Contains(Col1))
-                    {
-                        InText = false;
-                    }
-
-                    if (Col1 == "SUM")
-                    {
-                        FeedArticlePair.ArticleDetail.ArticleSummary = Col2;
-                    }
-
-                    if (Col1 == "TEXT")
-                    {
-                        InText = true;
-
-                        FeedArticlePair.ArticleDetail.ArticleText = Col2;
-                    }
-
-                    if (LineHeaders.Contains(Col1) == false && InText)
-                    {
-                        FeedArticlePair.ArticleDetail.ArticleText += FileLine;
-                    }
-
-                    if (Col1 == "URL" && PreviousURL != Col2)
-                    {
-                        FeedArticlePair = new FeedArticleUnion
+                        FeedHeader = feed,
+                        ArticleDetail = new FeedArticle
                         {
-                            FeedHeader = FeedHeader,
-                            ArticleDetail = new FeedArticle
-                            {
-                                FeedName = FeedHeader.FeedName
-                            }
-                        };
-
-                        FeedArticlePair.ArticleDetail.RowInsertDateTime = ModificationDateTimeText;
-
-                        if (!FeedsArticles.ContainsKey(FeedHeader.FeedName))
-                        {
-                            FeedsArticles.Add(FeedHeader.FeedName, new List<FeedArticleUnion>());
+                            FeedName = feed.FeedName
                         }
+                    };
 
-                        FeedsArticles[FeedHeader.FeedName].Add(FeedArticlePair);
+                    FeedArticlePair.ArticleDetail.RowInsertDateTime = ModificationDateTimeText;
 
-                        PreviousURL = Col2;
-                    }
+                    Articles.Add(FeedArticlePair);
 
-                    if (Col1 == "URL")
-                    {
-                        FeedArticlePair.ArticleDetail.ArticleUrl = Col2;
-                    }
+                    PreviousURL = Col2;
+                }
 
-                    if (Col1 == "DATE")
-                    {
-                        FeedArticlePair.ArticleDetail.ArticleDate = Col2;
-                    }
+                if (Col1 == "URL")
+                {
+                    FeedArticlePair.ArticleDetail.ArticleUrl = Col2;
+                }
 
-                    if (Col1 == "HEAD")
-                    {
-                        FeedArticlePair.ArticleDetail.HeadlineText = Col2;
-                    }
+                if (Col1 == "DATE")
+                {
+                    FeedArticlePair.ArticleDetail.ArticleDate = Col2;
+                }
+
+                if (Col1 == "HEAD")
+                {
+                    FeedArticlePair.ArticleDetail.HeadlineText = Col2;
                 }
             }
         }
 
-        Console.WriteLine($"\t\tUpdating SQLite database | {feedDbFilePath}");
+        if (Articles.Count > 0)
+        {
+            SortedList<string, List<FeedArticleUnion>> FeedsArticles = new()
+            {
+                [feed.FeedName] = Articles
+            };
 
-        WriteRSSArticlesToDatabase(feedDbFilePath, FeedsArticles);
+            List<string> FeedNames = new()
+            {
+                feed.FeedName
+            };
 
-        return;
+            SortedList<string, Feed> Feeds = new()
+            {
+                [feed.FeedName] = feed
+            };
+
+            string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
+
+            using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
+
+            UpdateRSSTables(FeedsArticles, SQLConn, FeedNames, Feeds);
+        }
+
+        return Articles;
     }
 
     private static string GetNormalizedFeedFilePath(string feedSaveDirectoryPath, Feed feedInfo)
@@ -264,21 +289,21 @@ public static class FeedDataExchange
         return Feeds;
     }
 
-    private static void UpdateRSSTables(SortedList<string, List<FeedArticleUnion>> feedsArticles, SQLiteConnection SQLConn, IList<string> FeedNames, SortedList<string, Feed> Feeds)
+    private static void UpdateRSSTables(SortedList<string, List<FeedArticleUnion>> feedsArticles, SQLiteConnection sqlConn, IList<string> feedNames, SortedList<string, Feed> feeds)
     {
-        foreach (var FeedName in FeedNames)
+        foreach (var FeedName in feedNames)
         {
-            var FeedHeader = Feeds[FeedName];
+            var FeedHeader = feeds[FeedName];
 
             List<FeedArticleUnion> FeedArticles = feedsArticles[FeedName];
 
             /*Insert or Update feeds table*/
-            ModifyFeed(SQLConn, FeedHeader);
+            ModifyFeed(sqlConn, FeedHeader);
 
             foreach (var article in FeedArticles)
             {
                 /*Insert or Update feeds_articles table*/
-                ModifyFeedArticle(SQLConn, FeedHeader, article);
+                ModifyFeedArticle(sqlConn, FeedHeader, article);
             }
         }
 
