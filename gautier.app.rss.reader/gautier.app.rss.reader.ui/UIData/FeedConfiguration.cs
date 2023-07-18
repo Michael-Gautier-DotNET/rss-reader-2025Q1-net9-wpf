@@ -4,7 +4,7 @@ using gautier.rss.data.RSSDb;
 
 namespace gautier.app.rss.reader.ui.UIData
 {
-    internal class FeedConfiguration
+    internal static class FeedConfiguration
     {
         internal static string FeedSaveDirectoryPath => Directory.GetCurrentDirectory();
 
