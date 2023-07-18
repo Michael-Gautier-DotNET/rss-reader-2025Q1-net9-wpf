@@ -118,7 +118,7 @@ namespace gautier.rss.data.RSSDb
             return;
         }
 
-        public static Feed GetFeed(SQLiteConnection sqlConn, int id)
+        public static Feed GetRow(SQLiteConnection sqlConn, int id)
         {
             Feed FeedEntry = new();
 
@@ -128,14 +128,36 @@ namespace gautier.rss.data.RSSDb
             {
                 SQLCmd.Parameters.AddWithValue("@id", id);
 
-                using (SQLiteDataReader SQLRowReader = SQLCmd.ExecuteReader())
-                {
-                    int ColCount = SQLRowReader.FieldCount;
+                using SQLiteDataReader SQLRowReader = SQLCmd.ExecuteReader();
 
-                    while (SQLRowReader.Read())
-                    {
-                        FeedEntry = CreateFeed(SQLRowReader, ColCount);
-                    }
+                int ColCount = SQLRowReader.FieldCount;
+
+                while (SQLRowReader.Read())
+                {
+                    FeedEntry = CreateFeed(SQLRowReader, ColCount);
+                }
+            }
+
+            return FeedEntry;
+        }
+
+        public static Feed GetRow(SQLiteConnection sqlConn, string feedName)
+        {
+            Feed FeedEntry = new();
+
+            string CommandText = $"SELECT * FROM {_TableName} WHERE feed_name = @FeedName;";
+
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
+            {
+                SQLCmd.Parameters.AddWithValue("@FeedName", feedName);
+
+                using SQLiteDataReader SQLRowReader = SQLCmd.ExecuteReader();
+
+                int ColCount = SQLRowReader.FieldCount;
+
+                while (SQLRowReader.Read())
+                {
+                    FeedEntry = CreateFeed(SQLRowReader, ColCount);
                 }
             }
 
