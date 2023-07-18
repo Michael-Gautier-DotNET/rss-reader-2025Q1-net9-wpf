@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -77,6 +78,20 @@ namespace gautier.app.rss.reader.ui
             Background = Brushes.IndianRed,
         };
 
+        private readonly Button _NewButton = new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Background = Brushes.Orange,
+            BorderBrush = Brushes.OrangeRed,
+            BorderThickness = new Thickness(1),
+            Content = "New Feed",
+            Margin = new Thickness(4),
+            Padding = new Thickness(4)
+        };
+
         private readonly Button _SaveButton = new()
         {
             HorizontalAlignment = HorizontalAlignment.Right,
@@ -116,6 +131,7 @@ namespace gautier.app.rss.reader.ui
             VerticalAlignment = VerticalAlignment.Stretch,
             AutoGenerateColumns = false,
             IsReadOnly = true,
+            SelectionMode = DataGridSelectionMode.Single,
         };
 
         private BindableFeed CurrentFeed
@@ -158,29 +174,209 @@ namespace gautier.app.rss.reader.ui
             _FeedsGrid.SelectionChanged += FeedsGrid_SelectionChanged;
             _DeleteButton.Click += DeleteButton_Click;
             _SaveButton.Click += SaveButton_Click;
+            _NewButton.Click += NewButton_Click;
 
             if (_Feeds.Count > 0)
             {
                 _FeedsGrid.SelectedIndex = 0;
             }
 
+            _FeedName.Focus();
+
             return;
+        }
+
+        private void NewButton_Click(object sender, RoutedEventArgs e)
+        {
+            _FeedsGrid.SelectedIndex = -1;
+
+            ResetInput();
+
+            _FeedName.Focus();
+
+            return;
+        }
+
+        private BindableFeed ResetInput()
+        {
+            BindableFeed BFeed = new();
+
+            _FeedName.Text = BFeed.Name;
+            _FeedUrl.Text = BFeed.Url;
+            _RetrieveLimitHrs.Value = BFeed.RetrieveLimitHrs;
+            _RetentionDays.Value = BFeed.RetentionDays;
+
+            return BFeed;
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            BindableFeed CFeed = CurrentFeed;
+            BindableFeed CFeed = CurrentFeed ?? new();
 
+            bool InputIsValid = CheckInput(CFeed);
+
+            if (InputIsValid == false)
+            {
+                return;
+            }
+
+            /*
+             * The assignment action here should simultaneously update the Data Grid.
+             */
             CFeed.Name = _FeedName.Text;
             CFeed.Url = _FeedUrl.Text;
             CFeed.RetrieveLimitHrs = Convert.ToInt32(_RetrieveLimitHrs.Value);
             CFeed.RetentionDays = Convert.ToInt32(_RetentionDays.Value);
 
-            List<Feed> UpdatedFeeds = BindableFeed.ConvertFeeds(_Feeds);
+            /*
+             * Set the date/time back a few days to trigger download of the feed
+             *    when it is newly added.
+             */
+            if (CFeed.Id < 1)
+            {
+                CFeed.LastRetrieved = DateTime.Today.AddDays(-4);
+            }
 
-            FeedDataExchange.WriteRSSFeedToDatabase(FeedConfiguration.FeedDbFilePath, UpdatedFeeds);
+            Feed DbInputFeed = BindableFeed.ConvertFeed(CFeed);
+
+            Feed UpdatedFeed = FeedDataExchange.UpdateFeedConfigurationInDatabase(FeedConfiguration.FeedDbFilePath, DbInputFeed);
+
+            bool InputAndUpdatedFeedsMatch = DbInputFeed.FeedName == UpdatedFeed.FeedName;
+
+            if (InputAndUpdatedFeedsMatch)
+            {
+                bool Found = false;
+
+                foreach (BindableFeed FeedEntry in _Feeds)
+                {
+                    Found = UpdatedFeed.FeedName == FeedEntry.Name;
+
+                    if (Found)
+                    {
+                        break;
+                    }
+                }
+
+                if (Found == false)
+                {
+                    /*
+                     * Downside to using ConvertFeed(UFeed) is loss of original name and original url used to update the main UI.
+                     * Do not use BindableFeed.ConvertFeed(UFeed);
+                     */
+                    BindableFeed FeedOutput = BindableFeed.ConvertFeedNarrow(UpdatedFeed);
+
+                    _Feeds.Add(CFeed);
+
+                    _FeedsGrid.SelectedItem = FeedOutput;
+                }
+            }
 
             return;
+        }
+
+        private bool CheckInput(BindableFeed feed)
+        {
+            int ErrorCount = 0;
+
+            StringBuilder Errors = new();
+
+            Action<string> DispatchError = (string errorMessage) =>
+            {
+                Errors.AppendLine(errorMessage);
+
+                ErrorCount++;
+            };
+
+            string FeedName = _FeedName.Text;
+            string FeedUrl = _FeedUrl.Text;
+
+            if (string.IsNullOrWhiteSpace(FeedName))
+            {
+                DispatchError($"Feed Name cannot be blank.");
+            }
+
+            if (string.IsNullOrWhiteSpace(FeedUrl))
+            {
+                DispatchError($"Feed Url cannot be blank.");
+            }
+
+            /*
+             * Unique Name Validation.
+             */
+            SortedList<string, int> Names = new();
+
+            foreach (BindableFeed FeedEntry in _Feeds)
+            {
+                string EntryFeedName = FeedEntry.Name;
+
+                if (Names.ContainsKey(EntryFeedName))
+                {
+                    int RowCount = Names[EntryFeedName];
+
+                    RowCount++;
+
+                    Names[EntryFeedName] = RowCount;
+                }
+                else
+                {
+                    if (feed.Id != FeedEntry.Id)
+                    {
+                        Names[EntryFeedName] = 1;
+                    }
+                }
+            }
+
+            if (Names.ContainsKey(FeedName))
+            {
+                DispatchError($"Feed Name must be unique.");
+            }
+
+            /*
+             * Unique Url Validation.
+             */
+            SortedList<string, int> Urls = new();
+
+            foreach (BindableFeed FeedEntry in _Feeds)
+            {
+                string EntryUrl = FeedEntry.Url;
+
+                if (Urls.ContainsKey(EntryUrl))
+                {
+                    int RowCount = Urls[EntryUrl];
+
+                    RowCount++;
+
+                    Urls[EntryUrl] = RowCount;
+                }
+                else
+                {
+                    if (feed.Id != FeedEntry.Id)
+                    {
+                        Urls[EntryUrl] = 1;
+                    }
+                }
+            }
+
+            if (Urls.ContainsKey(FeedUrl))
+            {
+                DispatchError($"Feed Url must be unique.");
+            }
+
+            bool IsValidUrl = RSSNetClient.ValidateUrlIsHttpOrHttps(FeedUrl);
+
+            if (IsValidUrl == false)
+            {
+                DispatchError($"Feed Url must be in the proper format starting with http:// or https://.");
+            }
+
+            bool IsValid = ErrorCount == 0;
+
+            if (IsValid == false)
+            {
+                MessageBox.Show(Errors.ToString());
+            }
+
+            return IsValid;
         }
 
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
@@ -269,6 +465,7 @@ namespace gautier.app.rss.reader.ui
         {
             UIElement[] ReaderOptionElements =
             {
+                _NewButton,
                 _SaveButton,
                 _DeleteButton,
             };
@@ -337,15 +534,19 @@ namespace gautier.app.rss.reader.ui
 
         private void FeedsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_FeedsGrid.SelectedItem is BindableFeed)
-            {
-                BindableFeed BFeed = CurrentFeed;
+            /*
+             * ResetInput has side-effects. It clears the input fields and returns a default instance.
+             * Handles cases where changing selected index is not recognized by the Grid.
+             * Such a case can be when there are no rows yet.
+             */
+            BindableFeed BFeed = CurrentFeed ?? ResetInput();
 
-                _FeedName.Text = BFeed.Name;
-                _FeedUrl.Text = BFeed.Url;
-                _RetrieveLimitHrs.Value = BFeed.RetrieveLimitHrs;
-                _RetentionDays.Value = BFeed.RetentionDays;
-            }
+            _FeedName.Text = BFeed.Name;
+            _FeedUrl.Text = BFeed.Url;
+            _RetrieveLimitHrs.Value = BFeed.RetrieveLimitHrs;
+            _RetentionDays.Value = BFeed.RetentionDays;
+
+            _FeedName.Focus();
 
             return;
         }
