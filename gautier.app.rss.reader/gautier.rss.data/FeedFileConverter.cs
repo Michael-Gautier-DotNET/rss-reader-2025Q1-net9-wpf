@@ -43,7 +43,7 @@ namespace gautier.rss.data
              */
             foreach (var FeedInfo in feedInfos)
             {
-                string FeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, FeedInfo);
+                string FeedFilePath = FeedFileUtil.GetRSSXmlFeedFilePath(feedSaveDirectoryPath, FeedInfo);
 
                 /*
                  * VERY IMPORTANT
@@ -135,7 +135,7 @@ namespace gautier.rss.data
         public static string WriteRSSArticlesToFile(string feedSaveDirectoryPath, Feed feed, List<FeedArticle> articles)
         {
             StringBuilder RSSFeedFileOutput = new();
-            string NormalizedFeedFilePath = GetNormalizedFeedFilePath(feedSaveDirectoryPath, feed);
+            string NormalizedFeedFilePath = FeedFileUtil.GetRSSTabDelimitedFeedFilePath(feedSaveDirectoryPath, feed);
 
             using (StreamWriter RSSFeedFile = new(NormalizedFeedFilePath, false))
             {
@@ -186,7 +186,7 @@ namespace gautier.rss.data
         {
             List<FeedArticle> Articles = new();
 
-            string RSSFeedFilePath = GetFeedFilePath(feedSaveDirectoryPath, feed);
+            string RSSFeedFilePath = FeedFileUtil.GetRSSXmlFeedFilePath(feedSaveDirectoryPath, feed);
 
             XFeed RSSFeed = RSSNetClient.CreateRSSXFeed(RSSFeedFilePath);
 
@@ -220,16 +220,6 @@ namespace gautier.rss.data
                 ArticleUrl = ArticleUrl,
                 RowInsertDateTime = DateTime.Now.ToString(_InvariantFormat.UniversalSortableDateTimePattern)
             };
-        }
-
-        private static string GetFeedFilePath(string feedSaveDirectoryPath, Feed feedInfo)
-        {
-            return Path.Combine(feedSaveDirectoryPath, $"{feedInfo.FeedName}.xml");
-        }
-
-        private static string GetNormalizedFeedFilePath(string feedSaveDirectoryPath, Feed feedInfo)
-        {
-            return Path.Combine(feedSaveDirectoryPath, $"{feedInfo.FeedName}.txt");
         }
 
         public static Feed[] GetStaticFeedInfos(string feedsFilePath)
