@@ -45,7 +45,9 @@ namespace gautier.rss.data
         {
             string FilePath = Path.Combine(fileDownloadDirectoryPath, $"{feed.FeedName}.xml");
 
-            if (File.Exists(FilePath) == false)
+            bool FeedCanBeUpdated = CheckFeedIsEligibleForUpdate(feed);
+
+            if (FeedCanBeUpdated)
             {
                 string Url = feed.FeedUrl;
 
@@ -56,7 +58,10 @@ namespace gautier.rss.data
 
                 string? Content = HttpResponse.Content;
 
-                File.WriteAllText(FilePath, Content);
+                if (string.IsNullOrWhiteSpace(Content) == false)
+                {
+                    File.WriteAllText(FilePath, Content);
+                }
             }
 
             return FilePath;
@@ -84,7 +89,9 @@ namespace gautier.rss.data
         {
             XFeed RSSFeed = new();
 
-            if (File.Exists(rssFeedFilePath) == true)
+            bool FeedFileExists = File.Exists(rssFeedFilePath);
+
+            if (FeedFileExists)
             {
                 XFeedParser Parser = new();
 
