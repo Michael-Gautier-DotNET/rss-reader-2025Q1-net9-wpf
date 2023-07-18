@@ -253,20 +253,6 @@ public static class FeedDataExchange
         return;
     }
 
-    public static void WriteRSSFeedToDatabase(string feedDbFilePath, List<Feed> feeds)
-    {
-        string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
-
-        using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
-
-        foreach (Feed FeedEntry in feeds)
-        {
-            ModifyFeed(SQLConn, FeedEntry);
-        }
-
-        return;
-    }
-
     private static SortedList<string, Feed> CollectFeeds(SortedList<string, List<FeedArticleUnion>> feedsArticles, IList<string> feedNames)
     {
         SortedList<string, Feed> Feeds = new();
@@ -344,7 +330,7 @@ public static class FeedDataExchange
         {
             if (HasId)
             {
-                Feed FeedEntry = FeedReader.GetFeed(sqlConn, Id);
+                Feed FeedEntry = FeedReader.GetRow(sqlConn, Id);
 
                 string FeedNameCurrent = FeedEntry.FeedName;
                 string FeedNameProposed = feedHeader.FeedName;
@@ -438,6 +424,19 @@ public static class FeedDataExchange
         return;
     }
 
+    public static Feed UpdateFeedConfigurationInDatabase(string feedDbFilePath, Feed feed)
+    {
+        string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
+
+        using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
+
+        ModifyFeed(SQLConn, feed);
+
+        Feed FeedEntry = FeedReader.GetRow(SQLConn, feed.FeedName);
+
+        return FeedEntry;
+    }
+
     public static bool RemoveFeedFromDatabase(string feedDbFilePath, int feedDbId)
     {
         bool IsDeleted = false;
@@ -451,7 +450,7 @@ public static class FeedDataExchange
         /*Only Delete if the Feed record exists in the database.*/
         if (Exists)
         {
-            Feed FeedEntry = FeedReader.GetFeed(SQLConn, feedDbId);
+            Feed FeedEntry = FeedReader.GetRow(SQLConn, feedDbId);
 
             FeedArticleWriter.DeleteArticles(SQLConn, FeedEntry.FeedName);
 
