@@ -4,6 +4,353 @@
              xmlns:local="clr-namespace:gautier.app.rss.reader.ui"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <!-- Linear Gradient Brushes -->
+            <LinearGradientBrush x:Key="InputAreaBackgroundBrush"
+                                 StartPoint="0,0"
+                                 EndPoint="0,1">
+                <GradientStop Color="#47210b"
+                              Offset="0.9" />
+                <GradientStop Color="#fff8a8"
+                              Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="DataGridHeaderBackgroundBrush"
+                                 StartPoint="0,0"
+                                 EndPoint="0,1">
+                <GradientStop Color="#96330b"
+                              Offset="0.8" />
+                <GradientStop Color="#e18d00"
+                              Offset="1" />
+            </LinearGradientBrush>
+            
+            <LinearGradientBrush x:Key="DataGridRowAlternateBackgroundBrush"
+                                 StartPoint="0,0"
+                                 EndPoint="0,1">
+                <GradientStop Color="#c6e900"
+                              Offset="0" />
+                <GradientStop Color="#ffde00"
+                              Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="ActiveTabBackgroundBrush"
+                                 StartPoint="0,0"
+                                 EndPoint="0,1">
+                <GradientStop Color="#FF2A2A"
+                              Offset="0" />
+                <GradientStop Color="#550000"
+                              Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="InactiveTabBackgroundBrush"
+                                 StartPoint="0,0"
+                                 EndPoint="0,1">
+                <GradientStop Color="#ffa500"
+                              Offset="0" />
+                <GradientStop Color="#ffd17c"
+                              Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="TabControlStripBackgroundBrush"
+                                 StartPoint="0,0"
+                                 EndPoint="1,0">
+                <GradientStop Color="#F4E7D7"
+                              Offset="0" />
+                <GradientStop Color="#F4E3D7"
+                              Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="ReaderFeedNameBackgroundBrush"
+                                 StartPoint="0,0"
+                                 EndPoint="1,0">
+                <GradientStop Color="#F4E7D7"
+                              Offset="0" />
+                <GradientStop Color="#F4E3D7"
+                              Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="ReaderHeadlineBackgroundBrush"
+                                 StartPoint="0,0"
+                                 EndPoint="1,0">
+                <GradientStop Color="#FFCC00"
+                              Offset="0" />
+                <GradientStop Color="#FF6600"
+                              Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="ReaderOptionsPanelBackgroundBrush"
+                                 StartPoint="0,0"
+                                 EndPoint="0,1">
+                <GradientStop Color="#d40000"
+                              Offset="0" />
+                <GradientStop Color="#550000"
+                              Offset="0.4" />
+            </LinearGradientBrush>
+
+            <!-- Style Definitions -->
+            <Style x:Key="TabStyle"
+                   TargetType="TabItem">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TabItem">
+                            <Grid>
+                                <Border x:Name="border"
+                                        BorderThickness="1">
+                                    <Border.BorderBrush>
+                                        <SolidColorBrush Color="#FF6600" />
+                                    </Border.BorderBrush>
+                                    <Border.Background>
+                                        <SolidColorBrush Color="#FF6600" />
+                                    </Border.Background>
+                                    <ContentPresenter x:Name="contentPresenter"
+                                                      ContentSource="Header"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      Margin="10,2,10,2" />
+                                </Border>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsSelected"
+                                         Value="True">
+                                    <Setter TargetName="border"
+                                            Property="Background"
+                                            Value="{StaticResource ActiveTabBackgroundBrush}" />
+                                    <Setter TargetName="contentPresenter"
+                                            Property="TextElement.Foreground"
+                                            Value="#ff9955" />
+                                </Trigger>
+                                <Trigger Property="IsSelected"
+                                         Value="False">
+                                    <Setter TargetName="border"
+                                            Property="Background"
+                                            Value="{StaticResource InactiveTabBackgroundBrush}" />
+                                    <Setter TargetName="contentPresenter"
+                                            Property="TextElement.Foreground"
+                                            Value="#552200" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="TabControlStripStyle"
+                   TargetType="TabControl">
+                <Setter Property="Background"
+                        Value="{StaticResource TabControlStripBackgroundBrush}" />
+                <Setter Property="BorderBrush"
+                        Value="#FF6600" />
+                <Setter Property="BorderThickness"
+                        Value="1" />
+            </Style>
+
+            <Style x:Key="ReaderFeedNameStyle"
+                   TargetType="Label">
+                <Setter Property="Foreground"
+                        Value="#552200" />
+                <Setter Property="Background"
+                        Value="{StaticResource ReaderFeedNameBackgroundBrush}" />
+                <Setter Property="BorderBrush"
+                        Value="#FF6600" />
+                <Setter Property="BorderThickness"
+                        Value="1" />
+                <Setter Property="FontSize"
+                        Value="19" />
+                <Setter Property="FontWeight"
+                        Value="ExtraBold" />
+                <Setter Property="FontFamily"
+                        Value="sans-serif" />
+                <Setter Property="HorizontalContentAlignment"
+                        Value="Right" />
+                <Setter Property="VerticalContentAlignment"
+                        Value="Center" />
+                <Setter Property="Padding"
+                        Value="4,4,24,4" />
+            </Style>
+
+            <Style x:Key="ReaderHeadlineStyle"
+                   TargetType="Label">
+                <Setter Property="Foreground"
+                        Value="#422400" />
+                <Setter Property="Background"
+                        Value="{StaticResource ReaderHeadlineBackgroundBrush}" />
+                <Setter Property="FontSize"
+                        Value="12" />
+                <Setter Property="FontWeight"
+                        Value="SemiBold" />
+                <Setter Property="FontFamily"
+                        Value="sans-serif" />
+                <Setter Property="Padding"
+                        Value="16,16,16,8" />
+            </Style>
+
+            <Style x:Key="ReaderArticleStyle"
+                   TargetType="WebBrowser">
+                <Setter Property="Margin"
+                        Value="0.4" />
+            </Style>
+
+            <Style x:Key="ReaderOptionsPanelStyle"
+                   TargetType="StackPanel">
+                <Setter Property="Background"
+                        Value="{StaticResource ReaderOptionsPanelBackgroundBrush}" />
+                <Setter Property="Width"
+                        Value="auto" />
+                <Setter Property="Height"
+                        Value="auto" />
+                <Setter Property="FlowDirection"
+                        Value="RightToLeft" />
+                <Setter Property="HorizontalAlignment"
+                        Value="Stretch" />
+                <Setter Property="VerticalAlignment"
+                        Value="Stretch" />
+                <Setter Property="Orientation"
+                        Value="Horizontal" />
+            </Style>
+
+            <Style x:Key="PanelButtonStyle"
+                   TargetType="Button">
+                <Setter Property="HorizontalAlignment"
+                        Value="Right" />
+                <Setter Property="VerticalAlignment"
+                        Value="Center" />
+                <Setter Property="HorizontalContentAlignment"
+                        Value="Center" />
+                <Setter Property="VerticalContentAlignment"
+                        Value="Center" />
+                <Setter Property="Background"
+                        Value="Orange" />
+                <Setter Property="BorderBrush"
+                        Value="OrangeRed" />
+                <Setter Property="BorderThickness"
+                        Value="1" />
+                <Setter Property="Margin"
+                        Value="4" />
+                <Setter Property="Padding"
+                        Value="4" />
+            </Style>
+
+            <Style TargetType="ListBoxItem" x:Key="ListBoxItemStyle">
+                <Setter Property="SnapsToDevicePixels"
+                        Value="true" />
+                <Setter Property="OverridesDefaultStyle"
+                        Value="true" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <Border x:Name="Border"
+                                    Padding="2"
+                                    SnapsToDevicePixels="true">
+                                <Border.Background>
+                                    <SolidColorBrush Color="Transparent" />
+                                </Border.Background>
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="SelectionStates">
+                                        <VisualState x:Name="Unselected" />
+                                        <VisualState x:Name="Selected">
+                                            <Storyboard>
+                                                <ColorAnimationUsingKeyFrames Storyboard.TargetName="Border"
+                                                                              Storyboard.TargetProperty="(Panel.Background).
+                    (SolidColorBrush.Color)">
+                                                    <EasingColorKeyFrame KeyTime="0"
+                                                                         Value="#FFCCAA" />
+                                                </ColorAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="SelectedUnfocused">
+                                            <Storyboard>
+                                                <ColorAnimationUsingKeyFrames Storyboard.TargetName="Border"
+                                                                              Storyboard.TargetProperty="(Panel.Background).
+                    (SolidColorBrush.Color)">
+                                                    <EasingColorKeyFrame KeyTime="0"
+                                                                         Value="#FFCCAA" />
+                                                </ColorAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <ContentPresenter />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ListBoxStyle"
+                   TargetType="ListBox">
+                <Setter Property="ItemContainerStyle"
+                        Value="{StaticResource ListBoxItemStyle}" />
+            </Style>
+
+            <Style TargetType="DataGrid"
+                   x:Key="DataGridStyle">
+
+                <Setter Property="VerticalAlignment"
+                        Value="Stretch" />
+                <Setter Property="AutoGenerateColumns"
+                        Value="false" />
+                <Setter Property="IsReadOnly"
+                        Value="true" />
+                <Setter Property="SelectionMode"
+                        Value="Single" />
+                <Setter Property="AlternatingRowBackground"
+                        Value="{StaticResource DataGridRowAlternateBackgroundBrush}" />
+                <Setter Property="ColumnHeaderStyle">
+                    <Setter.Value>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Padding"
+                                    Value="8" />
+                            <Setter Property="HorizontalContentAlignment"
+                                    Value="Center" />
+                            <Setter Property="Background"
+                                    Value="{StaticResource DataGridHeaderBackgroundBrush}" />
+                            <Setter Property="BorderBrush"
+                                    Value="#550000" />
+                            <Setter Property="BorderThickness"
+                                    Value="1" />
+                            <Setter Property="TextElement.Foreground"
+                                    Value="#fff924" />
+                            <Setter Property="TextElement.FontSize"
+                                    Value="12" />
+                            <Setter Property="TextElement.FontWeight"
+                                    Value="Bold" />
+                        </Style>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="Slider" x:Key="NumericSliderStyle">
+                <Setter Property="Foreground"
+                        Value="#fff8a8" />
+                <Setter Property="IsSnapToTickEnabled"
+                        Value="true" />
+                <Setter Property="TickPlacement"
+                        Value="Both" />
+                <Setter Property="AutoToolTipPlacement"
+                        Value="BottomRight" />
+            </Style>
+
+            <Style TargetType="Label"
+                   x:Key="Layer0Background">
+                <Setter Property="BorderBrush"
+                        Value="Orange" />
+                <Setter Property="BorderThickness"
+                        Value="1" />
+                <Setter Property="Background"
+                        Value="{StaticResource InputAreaBackgroundBrush}" />
+            </Style>
+            
+            <Style TargetType="Label"
+                   x:Key="InputHeaderLabel">
+                <Setter Property="Foreground"
+                        Value="#fff8a8" />
+            </Style>
+
+            <Style TargetType="TextBox"
+                   x:Key="InputTextBox">
+                <Setter Property="BorderBrush"
+                        Value="#fff8a8" />
+            </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

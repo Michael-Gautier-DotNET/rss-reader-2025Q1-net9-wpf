@@ -4,9 +4,7 @@ using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
-using System.Windows.Media;
 
 using gautier.app.rss.reader.ui.UIData;
 using gautier.rss.data;
@@ -15,109 +13,88 @@ namespace gautier.app.rss.reader.ui
 {
     public partial class RSSManagerUI : Window
     {
+        private readonly Label _Layer0Background = new()
+        {
+            Style = App.ApplyStyle("Layer0Background"),
+        };
+
         private readonly Label _FeedNameLabel = new()
         {
+            Style = App.ApplyStyle("InputHeaderLabel"),
             Content = "Feed Name"
         };
 
         private readonly Label _FeedUrlLabel = new()
         {
+            Style = App.ApplyStyle("InputHeaderLabel"),
             Content = "Feed Url"
         };
 
         private readonly Label _RetrieveLimitHrsLabel = new()
         {
+            Style = App.ApplyStyle("InputHeaderLabel"),
             Content = "Update Loop (in Hours)"
         };
 
         private readonly Label _RetentionDaysLabel = new()
         {
+            Style = App.ApplyStyle("InputHeaderLabel"),
             Content = "Article Expires (in Days)"
         };
 
         private readonly TextBox _FeedName = new()
         {
+            Style = App.ApplyStyle("InputTextBox"),
             MaxLength = 800
         };
 
         private readonly TextBox _FeedUrl = new()
         {
+            Style = App.ApplyStyle("InputTextBox"),
             MaxLength = 10000
         };
 
         private readonly Slider _RetrieveLimitHrs = new()
         {
+            Style = App.ApplyStyle("NumericSliderStyle"),
             Minimum = 1,
             Maximum = 14,
             Value = 1,
             TickFrequency = 1,
             Ticks = { 1, 2, 3, 4, 8, 10, 14 },
-            IsSnapToTickEnabled = true,
-            TickPlacement = TickPlacement.Both,
-            AutoToolTipPlacement = AutoToolTipPlacement.BottomRight,
         };
 
         private readonly Slider _RetentionDays = new()
         {
+            Style = App.ApplyStyle("NumericSliderStyle"),
             Minimum = 1,
             Maximum = 60,
             Value = 45,
             TickFrequency = 1,
             Ticks = { 1, 3, 6, 9, 10, 20, 30, 45, 60 },
-            IsSnapToTickEnabled = true,
-            TickPlacement = TickPlacement.Both,
-            AutoToolTipPlacement = AutoToolTipPlacement.BottomRight,
         };
 
         private readonly StackPanel _FeedOptionsPanel = new()
         {
-            FlowDirection = FlowDirection.RightToLeft,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch,
-            Orientation = Orientation.Horizontal,
-            Background = Brushes.IndianRed,
+            Style = App.ApplyStyle("ReaderOptionsPanelStyle"),
         };
 
         private readonly Button _NewButton = new()
         {
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            Background = Brushes.Orange,
-            BorderBrush = Brushes.OrangeRed,
-            BorderThickness = new Thickness(1),
+            Style = App.ApplyStyle("PanelButtonStyle"),
             Content = "New Feed",
-            Margin = new Thickness(4),
-            Padding = new Thickness(4)
         };
 
         private readonly Button _SaveButton = new()
         {
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            Background = Brushes.Orange,
-            BorderBrush = Brushes.OrangeRed,
-            BorderThickness = new Thickness(1),
+            Style = App.ApplyStyle("PanelButtonStyle"),
             Content = "Save Feed",
-            Margin = new Thickness(4),
-            Padding = new Thickness(4)
         };
 
         private readonly Button _DeleteButton = new()
         {
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            Background = Brushes.Orange,
-            BorderBrush = Brushes.OrangeRed,
-            BorderThickness = new Thickness(1),
+            Style = App.ApplyStyle("PanelButtonStyle"),
             Content = "Delete Feed",
-            Margin = new Thickness(4),
-            Padding = new Thickness(4)
         };
 
         private SortedList<string, Feed> _OriginalFeeds;
@@ -128,10 +105,7 @@ namespace gautier.app.rss.reader.ui
 
         private readonly DataGrid _FeedsGrid = new()
         {
-            VerticalAlignment = VerticalAlignment.Stretch,
-            AutoGenerateColumns = false,
-            IsReadOnly = true,
-            SelectionMode = DataGridSelectionMode.Single,
+            Style = App.ApplyStyle("DataGridStyle"),
         };
 
         private BindableFeed CurrentFeed
@@ -457,6 +431,11 @@ namespace gautier.app.rss.reader.ui
 
                 Grid.SetColumn(_FeedInputGrid.Children[ColumnIndex], ColumnIndex);
             }
+
+            _FeedInputGrid.Children.Add(_Layer0Background);
+
+            Grid.SetColumnSpan(_Layer0Background, _FeedInputGrid.ColumnDefinitions.Count);
+            Grid.SetZIndex(_Layer0Background, -1);
 
             return;
         }

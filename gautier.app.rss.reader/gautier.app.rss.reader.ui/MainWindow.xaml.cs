@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Threading;
 
 using gautier.app.rss.reader.ui.UIData;
@@ -21,19 +20,27 @@ namespace gautier.app.rss.reader.ui
     {
         private readonly TabControl _ReaderTabs = new()
         {
-            Background = Brushes.Orange,
-            BorderBrush = Brushes.Beige,
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(1)
+            Style = App.ApplyStyle("TabControlStripStyle")
         };
 
         private readonly List<TabItem> _ReaderTabItems = new();
 
         private readonly Grid _ReaderFeedDetail = new();
 
-        private readonly TextBlock _ReaderFeedName = new();
-        private readonly TextBlock _ReaderHeadline = new();
-        private readonly WebBrowser _ReaderArticle = new();
+        private readonly Label _ReaderFeedName = new()
+        {
+            Style = App.ApplyStyle("ReaderFeedNameStyle"),
+        };
+
+        private readonly Label _ReaderHeadline = new()
+        {
+            Style = App.ApplyStyle("ReaderHeadlineStyle"),
+        };
+
+        private readonly WebBrowser _ReaderArticle = new()
+        {
+            Style = App.ApplyStyle("ReaderArticleStyle"),
+        };
 
         private static readonly string _EmptyArticle = @"<html><head><title>test</title></head><body><div>&nbsp;</div></body></html>";
 
@@ -52,39 +59,19 @@ namespace gautier.app.rss.reader.ui
 
         private readonly StackPanel _ReaderOptionsPanel = new()
         {
-            FlowDirection = FlowDirection.RightToLeft,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch,
-            Orientation = Orientation.Horizontal,
-            Background = Brushes.IndianRed,
+            Style = App.ApplyStyle("ReaderOptionsPanelStyle"),
         };
 
         private readonly Button _ReaderManagerButton = new()
         {
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            Background = Brushes.Orange,
-            BorderBrush = Brushes.OrangeRed,
-            BorderThickness = new Thickness(1),
+            Style = App.ApplyStyle("PanelButtonStyle"),
             Content = "Manage Feeds",
-            Margin = new Thickness(4),
-            Padding = new Thickness(4)
         };
 
         private readonly Button _ReaderArticleLaunchButton = new()
         {
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            Background = Brushes.Orange,
-            BorderBrush = Brushes.OrangeRed,
-            BorderThickness = new Thickness(1),
+            Style = App.ApplyStyle("PanelButtonStyle"),
             Content = "View Article",
-            Margin = new Thickness(4),
-            Padding = new Thickness(4)
         };
 
         public MainWindow()
@@ -228,7 +215,7 @@ namespace gautier.app.rss.reader.ui
                 {
                     ListBox ArticlesUI = FoundTab.Content as ListBox;
 
-                    if(HasExistingTabs == false)
+                    if (HasExistingTabs == false)
                     {
                         _ReaderTabs.Focus();
                         _ReaderTabs.SelectedIndex = 0;
@@ -413,9 +400,11 @@ namespace gautier.app.rss.reader.ui
         {
             TabItem ReaderTab = new()
             {
+                Style = App.ApplyStyle("TabStyle"),
                 Header = name,
                 Content = new ListBox
                 {
+                    Style = App.ApplyStyle("ListBoxStyle"),
                     DisplayMemberPath = "HeadlineText",
                     SelectedValuePath = "ArticleUrl",
                 }
@@ -465,14 +454,34 @@ namespace gautier.app.rss.reader.ui
 
             for (int RowIndex = 0; RowIndex < VerticalChildrenCount; RowIndex++)
             {
-                RowDefinition RowDef = new()
-                {
-                    Height = new(1, GridUnitType.Auto)
-                };
+                RowDefinition RowDef;
 
-                if (RowIndex == 2)
+                switch (RowIndex)
                 {
-                    RowDef.Height = new(4, GridUnitType.Star);
+                    case 0:
+                        RowDef = new()
+                        {
+                            Height = new(0.3, GridUnitType.Star)
+                        };
+                        break;
+                    case 1:
+                        RowDef = new()
+                        {
+                            Height = new(0.3, GridUnitType.Star)
+                        };
+                        break;
+                    case 2:
+                        RowDef = new()
+                        {
+                            Height = new(4, GridUnitType.Star)
+                        };
+                        break;
+                    default:
+                        RowDef = new()
+                        {
+                            Height = new(1, GridUnitType.Auto)
+                        };
+                        break;
                 }
 
                 _ReaderFeedDetail.RowDefinitions.Add(RowDef);
@@ -555,7 +564,7 @@ namespace gautier.app.rss.reader.ui
                 ArticleText = article?.ArticleSummary;
             }
 
-            _ReaderHeadline.Text = article?.HeadlineText ?? string.Empty;
+            _ReaderHeadline.Content = article?.HeadlineText ?? string.Empty;
             _ReaderArticle.NavigateToString(ArticleText);
 
             return;
@@ -574,7 +583,9 @@ namespace gautier.app.rss.reader.ui
         {
             if (IsFeedIndexValid)
             {
-                var FeedName = _ReaderFeedName.Text = $"{ReaderTab.Header}";
+                string FeedName = $"{ReaderTab.Header}";
+
+                _ReaderFeedName.Content = FeedName;
 
                 if (FeedHeadlines != null && FeedHeadlines.HasItems == false)
                 {
