@@ -46,6 +46,8 @@ namespace gautier.app.rss.reader.ui
 
         private bool _FeedsInitialized = false;
 
+        private DateTime _LastExpireCheck = DateTime.Now;
+
         private SortedList<string, Feed> _Feeds = null;
         private SortedList<string, FeedArticle> _FeedsArticles = null;
         private int _FeedIndex = -1;
@@ -342,6 +344,8 @@ namespace gautier.app.rss.reader.ui
             }
             else
             {
+                FeedDataExchange.RemoveExpiredArticlesFromDatabase(FeedConfiguration.SQLiteDbConnectionString);
+
                 _Feeds = FeedDataExchange.GetAllFeeds(FeedConfiguration.SQLiteDbConnectionString);
             }
 
@@ -604,6 +608,8 @@ namespace gautier.app.rss.reader.ui
 
         private void DownloadFeeds()
         {
+            PruneExpiredArticles();
+
             SortedList<string, Feed> DbFeeds = FeedDataExchange.GetAllFeeds(FeedConfiguration.SQLiteDbConnectionString);
 
             foreach (Feed FeedEntry in DbFeeds.Values)
@@ -695,6 +701,20 @@ namespace gautier.app.rss.reader.ui
             }
 
             return Found;
+        }
+
+        private void PruneExpiredArticles()
+        {
+            DateTime NextExpireCheck = _LastExpireCheck.AddHours(1);
+
+            if (DateTime.Now > NextExpireCheck)
+            {
+                _LastExpireCheck = DateTime.Now;
+
+                FeedDataExchange.RemoveExpiredArticlesFromDatabase(FeedConfiguration.SQLiteDbConnectionString);
+            }
+
+            return;
         }
     }
 }

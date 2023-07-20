@@ -119,6 +119,8 @@ namespace gautier.app.rss.reader.ui
 
         public RSSManagerUI()
         {
+            FeedDataExchange.RemoveExpiredArticlesFromDatabase(FeedConfiguration.SQLiteDbConnectionString);
+
             _OriginalFeeds = FeedDataExchange.GetAllFeeds(FeedConfiguration.SQLiteDbConnectionString);
 
             Initialized += RSSManagerUI_Initialized;
