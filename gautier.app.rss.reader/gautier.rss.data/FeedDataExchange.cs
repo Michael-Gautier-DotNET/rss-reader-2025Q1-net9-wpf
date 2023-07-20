@@ -463,4 +463,14 @@ public static class FeedDataExchange
 
         return IsDeleted;
     }
+
+    public static void RemoveExpiredArticlesFromDatabase(string sqlConnectionString)
+    {
+        using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(sqlConnectionString);
+
+        FeedArticleWriter.DeleteAllExpiredArticles(SQLConn);
+
+        return;
+    }
+
 }
