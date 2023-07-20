@@ -37,6 +37,24 @@ namespace gautier.rss.data.RSSDb
             return;
         }
 
+        internal static void DeleteAllExpiredArticles(SQLiteConnection sqlConn)
+        {
+            string CommandText = $"DELETE FROM {FeedArticleReader.TableName} AS a0 WHERE a0.article_url IN " +
+                $"(" +
+                $"SELECT art.article_url FROM {FeedArticleReader.TableName} AS art " +
+                $"INNER JOIN feeds AS fed ON art.feed_name = fed.feed_name " +
+                $"WHERE " +
+                $"DATETIME('now', 'localtime') > DATETIME(art.row_insert_date_time, '+' || fed.retention_days || ' days')" +
+                $"GROUP BY art.article_url" +
+                $");";
+
+            using SQLiteCommand SQLCmd = new(CommandText, sqlConn);
+
+            SQLCmd.ExecuteNonQuery();
+
+            return;
+        }
+
         internal static void ModifyFeedArticle(SQLiteConnection sqlConn, FeedArticleUnion article)
         {
             string[] ColumnNames = SQLUtil.StripColumnNames(new() { "id", "feed_name", "article_url" }, _ColumnNames);
