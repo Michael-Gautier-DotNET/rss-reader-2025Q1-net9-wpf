@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "gautier.app.rss.reader.ui",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "gautier.app.rss.feeddownloader", "gautier.app.rss.feeddownloader\gautier.app.rss.feeddownloader.csproj", "{BC90273C-B658-470E-9991-3C69773B2F1C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gautier.app.rss.dbvisualizer.cli", "gautier.app.rss.dbvisualizer.cli\gautier.app.rss.dbvisualizer.cli.csproj", "{6D0137BF-147F-466B-B3C1-652704C5EC8C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "gautier.app.rss.dbvisualizer.cli", "gautier.app.rss.dbvisualizer.cli\gautier.app.rss.dbvisualizer.cli.csproj", "{6D0137BF-147F-466B-B3C1-652704C5EC8C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

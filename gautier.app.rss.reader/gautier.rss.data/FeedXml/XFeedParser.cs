@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+﻿using System.Xml;
 
 namespace gautier.rss.data.FeedXml
 {
@@ -18,11 +18,17 @@ namespace gautier.rss.data.FeedXml
         public const string XmlNamespaceAtom1_0 = "http://www.w3.org/2005/Atom";
         public const string XmlNamespaceXml = "http://www.w3.org/XML/1998/namespace";
 
-        private XDocument _FeedDocument = new();
+        private readonly XmlDocument _FeedDocument = new();
         private XDocType _DocType = XDocType.Unknown;
 
         private bool _ProcessingHeader = false;
         private bool _ProcessingEntry = false;
+
+        // Future configurable entities
+        private readonly Dictionary<string, string> _customEntities = new()
+        {
+            { "Uuml", "Ü" }  // Add more entities as needed
+        };
 
         public XDocType DocType
         {
@@ -34,22 +40,47 @@ namespace gautier.rss.data.FeedXml
 
         public XFeed ParseFile(string filePath)
         {
-            XFeed Feed = new();
+            XFeed feed = new();
 
-            _FeedDocument = XDocument.Load(filePath);
+            // Generate and insert the custom DTD properly
+            string dtd = GenerateCustomDTD();
+            string xmlContent = System.IO.File.ReadAllText(filePath);
 
-            XElement? RootNode = _FeedDocument.Document?.Root;
+            // Place the DTD directly after the XML declaration
+            int declarationEnd = xmlContent.IndexOf("?>") + 2;
+            xmlContent = xmlContent.Insert(declarationEnd, dtd);
 
-            ParseNode(RootNode ?? new XElement(XName.Get(XmlNamespaceAtom1_0)), Feed);
+            // Load the XML file using XmlDocument with the custom DTD
+            _FeedDocument.XmlResolver = null; // Prevent external DTD fetching
+            _FeedDocument.LoadXml(xmlContent);
 
-            return Feed;
+            XmlElement? rootNode = _FeedDocument.DocumentElement ?? _FeedDocument.CreateElement("rss");
+            ParseNode(rootNode, feed);
+
+            return feed;
         }
 
-        private void ParseNode(XElement node, XFeed feed)
+        private string GenerateCustomDTD()
+        {
+            var dtdBuilder = new System.Text.StringBuilder();
+
+            dtdBuilder.AppendLine("<!DOCTYPE rss [");
+
+            foreach (var entity in _customEntities)
+            {
+                dtdBuilder.AppendLine($"<!ENTITY {entity.Key} \"{entity.Value}\">");
+            }
+
+            dtdBuilder.AppendLine("]>");
+
+            return dtdBuilder.ToString();
+        }
+
+        private void ParseNode(XmlElement node, XFeed feed)
         {
             XArticle Article = feed.Articles.Count > 0 ? feed.Articles.Last() : new();
 
-            switch (node.Name.LocalName)
+            switch (node.Name)
             {
                 /*Feed/Atom Level*/
                 case "feed":
@@ -95,11 +126,11 @@ namespace gautier.rss.data.FeedXml
                     {
                         if (_ProcessingEntry)
                         {
-                            Article.Title = node.Value;
+                            Article.Title = node.InnerText;
                         }
                         else if (_ProcessingHeader)
                         {
-                            feed.Title = node.Value;
+                            feed.Title = node.InnerText;
                         }
                     }
                     break;
@@ -108,7 +139,7 @@ namespace gautier.rss.data.FeedXml
                     {
                         if (_ProcessingEntry)
                         {
-                            string HRef = node.Value;
+                            string HRef = node.InnerText;
 
                             if (string.IsNullOrWhiteSpace(HRef))
                             {
@@ -119,7 +150,7 @@ namespace gautier.rss.data.FeedXml
                         }
                         else if (_ProcessingHeader)
                         {
-                            feed.Link = node.Value;
+                            feed.Link = node.InnerText;
                         }
                     }
                     break;
@@ -127,11 +158,11 @@ namespace gautier.rss.data.FeedXml
                     {
                         if (_ProcessingHeader)
                         {
-                            feed.Description = node.Value;
+                            feed.Description = node.InnerText;
                         }
                         else if (_ProcessingEntry)
                         {
-                            Article.Description = node.Value;
+                            Article.Description = node.InnerText;
                         }
                     }
                     break;
@@ -141,11 +172,11 @@ namespace gautier.rss.data.FeedXml
                     {
                         if (_ProcessingHeader)
                         {
-                            feed.PublicationDate = node.Value;
+                            feed.PublicationDate = node.InnerText;
                         }
                         else if (_ProcessingEntry)
                         {
-                            Article.PublicationDate = node.Value;
+                            Article.PublicationDate = node.InnerText;
                         }
                     }
                     break;
@@ -153,7 +184,7 @@ namespace gautier.rss.data.FeedXml
                     {
                         if (_ProcessingHeader)
                         {
-                            feed.Language = node.Value;
+                            feed.Language = node.InnerText;
                         }
                     }
                     break;
@@ -161,7 +192,7 @@ namespace gautier.rss.data.FeedXml
                     {
                         if (_ProcessingHeader)
                         {
-                            feed.UpdatePeriod = node.Value;
+                            feed.UpdatePeriod = node.InnerText;
                         }
                     }
                     break;
@@ -169,7 +200,7 @@ namespace gautier.rss.data.FeedXml
                     {
                         if (_ProcessingHeader)
                         {
-                            feed.UpdateFrequency = node.Value;
+                            feed.UpdateFrequency = node.InnerText;
                         }
                     }
                     break;
@@ -177,7 +208,7 @@ namespace gautier.rss.data.FeedXml
                     {
                         if (_ProcessingHeader)
                         {
-                            feed.Generator = node.Value;
+                            feed.Generator = node.InnerText;
                         }
                     }
                     break;
@@ -199,7 +230,7 @@ namespace gautier.rss.data.FeedXml
                     {
                         if (_ProcessingEntry)
                         {
-                            Article.Creator = node.Value;
+                            Article.Creator = node.InnerText;
                         }
                     }
                     break;
@@ -207,16 +238,16 @@ namespace gautier.rss.data.FeedXml
                     {
                         if (_ProcessingEntry)
                         {
-                            Article.Guid = node.Value;
+                            Article.Guid = node.InnerText;
 
                             if (string.IsNullOrWhiteSpace(Article.Link))
                             {
-                                Article.Link = node.Value;
+                                Article.Link = node.InnerText;
                             }
 
-                            foreach (XAttribute Attr in node.Attributes())
+                            foreach (XmlAttribute Attr in node.Attributes)
                             {
-                                switch (Attr.Name.LocalName)
+                                switch (Attr.Name)
                                 {
                                     case "isPermaLink":
                                         {
@@ -233,27 +264,32 @@ namespace gautier.rss.data.FeedXml
                     {
                         if (_ProcessingEntry)
                         {
-                            Article.ContentEncoded = node.Value;
+                            Article.ContentEncoded = node.InnerText;
                         }
                     }
                     break;
             }
 
-            foreach (XElement NextElement in node.Elements())
+            foreach (XmlNode NextElement in node.ChildNodes)
             {
-                ParseNode(NextElement, feed);
+                if (NextElement.NodeType == XmlNodeType.Element)
+                {
+                    XmlElement E = NextElement as XmlElement ?? new XmlDocument().CreateElement("empty");
+
+                    ParseNode(E, feed);
+                }
             }
 
             return;
         }
 
-        private static string GetHrefAttrValue(XElement node)
+        private static string GetHrefAttrValue(XmlElement node)
         {
             string HRef = string.Empty;
 
-            foreach (XAttribute Attr in node.Attributes())
+            foreach (XmlAttribute Attr in node.Attributes)
             {
-                switch (Attr.Name.LocalName)
+                switch (Attr.Name)
                 {
                     case "href":
                         {
@@ -271,11 +307,11 @@ namespace gautier.rss.data.FeedXml
             return HRef;
         }
 
-        private void DetectRSSVersion(XElement node)
+        private void DetectRSSVersion(XmlElement node)
         {
-            foreach (XAttribute Attr in node.Attributes())
+            foreach (XmlAttribute Attr in node.Attributes)
             {
-                switch (Attr.Name.LocalName)
+                switch (Attr.Name)
                 {
                     case "version":
                         {
@@ -310,11 +346,11 @@ namespace gautier.rss.data.FeedXml
             return;
         }
 
-        private void DetectATOMVersion(XElement node)
+        private void DetectATOMVersion(XmlElement node)
         {
-            XNamespace NameSpaceValue = node.GetDefaultNamespace();
+            string NameSpaceValue = node.NamespaceURI;
 
-            switch (NameSpaceValue.NamespaceName)
+            switch (NameSpaceValue)
             {
                 case XmlNamespaceAtom0_3:
                     {
@@ -336,11 +372,11 @@ namespace gautier.rss.data.FeedXml
             return;
         }
 
-        private void CheckAtomAttributes(XElement node)
+        private void CheckAtomAttributes(XmlElement node)
         {
-            foreach (XAttribute Attr in node.Attributes())
+            foreach (XmlAttribute Attr in node.Attributes)
             {
-                switch (Attr.Name.LocalName)
+                switch (Attr.Name)
                 {
                     case "version":
                         {

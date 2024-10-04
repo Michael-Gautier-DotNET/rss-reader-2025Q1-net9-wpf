@@ -8,8 +8,8 @@ namespace gautier.rss.data.RSSDb
         private static readonly string _TableName = "feeds_articles";
         public static string TableName => _TableName;
 
-        public static string[] TableColumnNames => new string[]
-        {
+        public static string[] TableColumnNames =>
+        [
             "id",
             "feed_name",
             "headline_text",
@@ -18,7 +18,7 @@ namespace gautier.rss.data.RSSDb
             "article_date",
             "article_url",
             "row_insert_date_time"
-        };
+        ];
 
         public static int CountAllRows(SQLiteConnection sqlConn)
         {
