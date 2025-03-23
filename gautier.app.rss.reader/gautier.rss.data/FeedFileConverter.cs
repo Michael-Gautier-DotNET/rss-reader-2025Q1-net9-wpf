@@ -9,16 +9,16 @@ namespace gautier.rss.data
 {
     public static class FeedFileConverter
     {
-        private const char _Tab = '\t';
+        private static readonly char _Tab = '\t';
 
         private static readonly DateTimeFormatInfo _InvariantFormat = DateTimeFormatInfo.InvariantInfo;
 
         /// <summary>
         /// Designed to generate static local files even if they are later accidentally deleted.
         /// </summary>
-        public static void CreateStaticFeedFiles(string feedSaveDirectoryPath, string feedDbFilePath, Feed[] feedInfos)
+        public static void CreateStaticFeedFiles(in string feedSaveDirectoryPath, in string feedDbFilePath, in Feed[] feedInfos)
         {
-            if (Directory.Exists(feedSaveDirectoryPath) == false)
+            if (Directory.Exists(feedSaveDirectoryPath) is false)
             {
                 Directory.CreateDirectory(feedSaveDirectoryPath);
             }
@@ -62,7 +62,7 @@ namespace gautier.rss.data
                  * This should be overriden however when the logic shows a feed was already
                  *   accessed over the network within the upper time limit of 60 minutes.
                  */
-                bool ShouldCacheFileBeCreated = (File.Exists(FeedFilePath) == false);
+                bool ShouldCacheFileBeCreated = (File.Exists(FeedFilePath) is false);
 
                 /*
                  * An RSS feed database table entry exists and should be used to determine
@@ -115,7 +115,7 @@ namespace gautier.rss.data
             return;
         }
 
-        public static void TransformStaticFeedFiles(string feedSaveDirectoryPath, Feed[] feeds)
+        public static void TransformStaticFeedFiles(in string feedSaveDirectoryPath, in Feed[] feeds)
         {
             SortedList<string, List<FeedArticle>> Feeds = TransformXmlFeedToFeedArticles(feedSaveDirectoryPath, feeds);
 
@@ -132,7 +132,7 @@ namespace gautier.rss.data
             return;
         }
 
-        public static string WriteRSSArticlesToFile(string feedSaveDirectoryPath, Feed feed, List<FeedArticle> articles)
+        public static string WriteRSSArticlesToFile(in string feedSaveDirectoryPath, in Feed feed, in List<FeedArticle> articles)
         {
             StringBuilder RSSFeedFileOutput = new();
             string NormalizedFeedFilePath = FeedFileUtil.GetRSSTabDelimitedFeedFilePath(feedSaveDirectoryPath, feed);
@@ -168,9 +168,9 @@ namespace gautier.rss.data
             return NormalizedFeedFilePath;
         }
 
-        public static SortedList<string, List<FeedArticle>> TransformXmlFeedToFeedArticles(string feedSaveDirectoryPath, Feed[] feeds)
+        public static SortedList<string, List<FeedArticle>> TransformXmlFeedToFeedArticles(in string feedSaveDirectoryPath, in Feed[] feeds)
         {
-            SortedList<string, List<FeedArticle>> FeedArticles = new();
+            SortedList<string, List<FeedArticle>> FeedArticles = [];
 
             foreach (var FeedInfo in feeds)
             {
@@ -182,9 +182,9 @@ namespace gautier.rss.data
             return FeedArticles;
         }
 
-        public static List<FeedArticle> TransformXmlFeedToFeedArticles(string feedSaveDirectoryPath, Feed feed)
+        public static List<FeedArticle> TransformXmlFeedToFeedArticles(in string feedSaveDirectoryPath, in Feed feed)
         {
-            List<FeedArticle> Articles = new();
+            List<FeedArticle> Articles = [];
 
             string RSSFeedFilePath = FeedFileUtil.GetRSSXmlFeedFilePath(feedSaveDirectoryPath, feed);
 
@@ -200,13 +200,12 @@ namespace gautier.rss.data
             return Articles;
         }
 
-        private static FeedArticle CreateRSSFeedArticle(Feed feed, XArticle article)
+        private static FeedArticle CreateRSSFeedArticle(in Feed feed, in XArticle article)
         {
             string ArticleText = article.ContentEncoded;
             string ArticleUrl = article.Link;
 
-            DateTime ArticleDate;
-            DateTime.TryParse(article.PublicationDate, out ArticleDate);
+            _ = DateTime.TryParse(article.PublicationDate, out DateTime ArticleDate);
 
             string ArticleDateText = ArticleDate.ToString(_InvariantFormat.UniversalSortableDateTimePattern);
 
@@ -222,11 +221,11 @@ namespace gautier.rss.data
             };
         }
 
-        public static Feed[] GetStaticFeedInfos(string feedsFilePath)
+        public static Feed[] GetStaticFeedInfos(in string feedsFilePath)
         {
-            List<Feed> Feeds = new();
+            List<Feed> Feeds = [];
 
-            SortedList<string, string> FeedByName = new();
+            SortedList<string, string> FeedByName = [];
 
             using (StreamReader FeedsReader = new(feedsFilePath))
             {
@@ -268,7 +267,7 @@ namespace gautier.rss.data
                 Feeds.Add(FeedEntry);
             }
 
-            return Feeds.ToArray();
+            return [.. Feeds];
         }
     }
 }

@@ -107,7 +107,7 @@ namespace gautier.app.rss.reader.ui
         {
             //Show article in system's web browser.
 
-            if (Article != null)
+            if (Article is not null)
             {
                 string ArticleUrl = Article.ArticleUrl;
 
@@ -140,7 +140,7 @@ namespace gautier.app.rss.reader.ui
             return;
         }
 
-        private void CheckRSSManagerUIUpdates(RSSManagerUI ui)
+        private void CheckRSSManagerUIUpdates(in RSSManagerUI ui)
         {
             ObservableCollection<BindableFeed> ConfiguredFeeds = ui.Feeds;
 
@@ -180,7 +180,7 @@ namespace gautier.app.rss.reader.ui
             return;
         }
 
-        private void AddFeedToUIFollowingManagementUpdate(SortedList<string, Feed> activeFeeds, BindableFeed configuredFeed)
+        private void AddFeedToUIFollowingManagementUpdate(in SortedList<string, Feed> activeFeeds, in BindableFeed configuredFeed)
         {
             bool Found = false;
 
@@ -207,7 +207,7 @@ namespace gautier.app.rss.reader.ui
                 }
             }
 
-            if (Found == false)
+            if (Found is false)
             {
                 AddRSSTab(ConfiguredFeedName);
 
@@ -217,7 +217,7 @@ namespace gautier.app.rss.reader.ui
                 {
                     ListBox ArticlesUI = FoundTab.Content as ListBox;
 
-                    if (HasExistingTabs == false)
+                    if (HasExistingTabs is false)
                     {
                         _ReaderTabs.Focus();
                         _ReaderTabs.SelectedIndex = 0;
@@ -226,7 +226,7 @@ namespace gautier.app.rss.reader.ui
                     ArticlesUI.UpdateLayout();
                 }
 
-                if (_Feeds.ContainsKey(ConfiguredFeedName) == false)
+                if (_Feeds.ContainsKey(ConfiguredFeedName) is false)
                 {
                     Feed ReferenceFeed = BindableFeed.ConvertFeed(configuredFeed);
 
@@ -237,7 +237,7 @@ namespace gautier.app.rss.reader.ui
             return;
         }
 
-        private void UpdateFeedNamesFollowingManagementUpdate(SortedList<string, Feed> activeFeeds, BindableFeed configuredFeed)
+        private void UpdateFeedNamesFollowingManagementUpdate(in SortedList<string, Feed> activeFeeds, in BindableFeed configuredFeed)
         {
             int ActiveFeedCount = activeFeeds.Count;
 
@@ -272,7 +272,7 @@ namespace gautier.app.rss.reader.ui
             return;
         }
 
-        private TabItem FindRSSFeedTab(string name)
+        private TabItem FindRSSFeedTab(in string name)
         {
             ItemCollection Tabs = _ReaderTabs.Items;
 
@@ -297,11 +297,11 @@ namespace gautier.app.rss.reader.ui
         {
             SortedList<string, Feed> DbFeeds = FeedDataExchange.GetAllFeeds(FeedConfiguration.SQLiteDbConnectionString);
 
-            List<string> FeedNames = new(_Feeds.Keys);
+            List<string> FeedNames = [.. _Feeds.Keys];
 
             foreach (string FeedName in FeedNames)
             {
-                if (DbFeeds.ContainsKey(FeedName) == false)
+                if (DbFeeds.ContainsKey(FeedName) is false)
                 {
                     _Feeds.Remove(FeedName);
 
@@ -380,7 +380,7 @@ namespace gautier.app.rss.reader.ui
 
             Dispatcher.BeginInvoke(UIThreadAction);
 
-            if (_FeedUpdateTimer?.IsEnabled == false)
+            if (_FeedUpdateTimer?.IsEnabled is false)
             {
                 _FeedUpdateTimer?.Start();
             }
@@ -400,7 +400,7 @@ namespace gautier.app.rss.reader.ui
             return;
         }
 
-        private void AddRSSTab(string name)
+        private void AddRSSTab(in string name)
         {
             TabItem ReaderTab = new()
             {
@@ -458,35 +458,25 @@ namespace gautier.app.rss.reader.ui
 
             for (int RowIndex = 0; RowIndex < VerticalChildrenCount; RowIndex++)
             {
-                RowDefinition RowDef;
-
-                switch (RowIndex)
+                RowDefinition RowDef = RowIndex switch
                 {
-                    case 0:
-                        RowDef = new()
-                        {
-                            Height = new(0.3, GridUnitType.Star)
-                        };
-                        break;
-                    case 1:
-                        RowDef = new()
-                        {
-                            Height = new(0.3, GridUnitType.Star)
-                        };
-                        break;
-                    case 2:
-                        RowDef = new()
-                        {
-                            Height = new(4, GridUnitType.Star)
-                        };
-                        break;
-                    default:
-                        RowDef = new()
-                        {
-                            Height = new(1, GridUnitType.Auto)
-                        };
-                        break;
-                }
+                    0 => new()
+                    {
+                        Height = new(0.3, GridUnitType.Star)
+                    },
+                    1 => new()
+                    {
+                        Height = new(0.3, GridUnitType.Star)
+                    },
+                    2 => new()
+                    {
+                        Height = new(4, GridUnitType.Star)
+                    },
+                    _ => new()
+                    {
+                        Height = new(1, GridUnitType.Auto)
+                    },
+                };
 
                 _ReaderFeedDetail.RowDefinitions.Add(RowDef);
 
@@ -555,15 +545,15 @@ namespace gautier.app.rss.reader.ui
             return;
         }
 
-        private void ApplyArticle(FeedArticle? article)
+        private void ApplyArticle(in FeedArticle? article)
         {
             string ArticleText = _EmptyArticle;
 
-            if (string.IsNullOrWhiteSpace(article?.ArticleText) == false)
+            if (string.IsNullOrWhiteSpace(article?.ArticleText) is false)
             {
                 ArticleText = article?.ArticleText;
             }
-            else if (string.IsNullOrWhiteSpace(article?.ArticleSummary) == false)
+            else if (string.IsNullOrWhiteSpace(article?.ArticleSummary) is false)
             {
                 ArticleText = article?.ArticleSummary;
             }
@@ -591,7 +581,7 @@ namespace gautier.app.rss.reader.ui
 
                 _ReaderFeedName.Content = FeedName;
 
-                if (FeedHeadlines != null && FeedHeadlines.HasItems == false)
+                if (FeedHeadlines is not null && FeedHeadlines.HasItems is false)
                 {
                     _FeedsArticles = FeedDataExchange.GetFeedArticles(FeedConfiguration.SQLiteDbConnectionString, FeedName);
 
@@ -643,13 +633,13 @@ namespace gautier.app.rss.reader.ui
 
         private void ApplyNewFeeds()
         {
-            List<string> RSSFeedNames = new(_Feeds.Keys);
+            List<string> RSSFeedNames = [.. _Feeds.Keys];
 
             foreach (string FeedName in RSSFeedNames)
             {
                 SortedList<string, FeedArticle> Articles = FeedDataExchange.GetFeedArticles(FeedConfiguration.SQLiteDbConnectionString, FeedName);
 
-                List<string> ArticleUrls = new(Articles.Keys);
+                List<string> ArticleUrls = [.. Articles.Keys];
 
                 TabItem FoundTab = FindRSSFeedTab(FeedName);
 
@@ -657,7 +647,7 @@ namespace gautier.app.rss.reader.ui
 
                 ObservableCollection<FeedArticle> IndexedFeedArticles = ArticlesUI.ItemsSource as ObservableCollection<FeedArticle>;
 
-                if (IndexedFeedArticles != null)
+                if (IndexedFeedArticles is not null)
                 {
                     int AddedArticleCount = 0;
 
@@ -665,7 +655,7 @@ namespace gautier.app.rss.reader.ui
                     {
                         bool Found = ContainsArticleUrl(IndexedFeedArticles, ArticleUrl);
 
-                        if (Found == false)
+                        if (Found is false)
                         {
                             FeedArticle Article = Articles[ArticleUrl];
 
@@ -686,7 +676,7 @@ namespace gautier.app.rss.reader.ui
             return;
         }
 
-        private static bool ContainsArticleUrl(IList<FeedArticle> articles, string articleUrl)
+        private static bool ContainsArticleUrl(in IList<FeedArticle> articles, in string articleUrl)
         {
             bool Found = false;
 

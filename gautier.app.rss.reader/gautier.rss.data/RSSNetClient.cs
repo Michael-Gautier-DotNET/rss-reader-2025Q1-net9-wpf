@@ -15,7 +15,7 @@ namespace gautier.rss.data
     {
         private static readonly DateTimeFormatInfo _InvariantFormat = DateTimeFormatInfo.InvariantInfo;
 
-        public static bool CheckFeedIsEligibleForUpdate(Feed feed)
+        public static bool CheckFeedIsEligibleForUpdate(in Feed feed)
         {
             bool FeedIsEligibleForUpdate = false;
 
@@ -41,7 +41,7 @@ namespace gautier.rss.data
             return FeedIsEligibleForUpdate;
         }
 
-        public static string DownloadFeed(string fileDownloadDirectoryPath, Feed feed)
+        public static string DownloadFeed(in string fileDownloadDirectoryPath, in Feed feed)
         {
             string FilePath = Path.Combine(fileDownloadDirectoryPath, $"{feed.FeedName}.xml");
 
@@ -58,7 +58,7 @@ namespace gautier.rss.data
 
                 string? Content = HttpResponse.Content;
 
-                if (string.IsNullOrWhiteSpace(Content) == false)
+                if (string.IsNullOrWhiteSpace(Content) is false)
                 {
                     File.WriteAllText(FilePath, Content);
                 }
@@ -67,7 +67,7 @@ namespace gautier.rss.data
             return FilePath;
         }
 
-        public static void CreateRSSFeedFile(string feedUrl, string rssFeedFilePath)
+        public static void CreateRSSFeedFile(in string feedUrl, in string rssFeedFilePath)
         {
             try
             {
@@ -85,7 +85,7 @@ namespace gautier.rss.data
             return;
         }
 
-        public static XFeed CreateRSSXFeed(string rssFeedFilePath)
+        public static XFeed CreateRSSXFeed(in string rssFeedFilePath)
         {
             XFeed RSSFeed = new();
 
@@ -101,18 +101,18 @@ namespace gautier.rss.data
             return RSSFeed;
         }
 
-        public static bool ValidateUrlIsHttpOrHttps(string UrlValue)
+        public static bool ValidateUrlIsHttpOrHttps(in string UrlValue)
         {
             bool IsValidUrl = false;
 
-            if (string.IsNullOrEmpty(UrlValue) == false)
+            if (string.IsNullOrEmpty(UrlValue) is false)
             {
                 IsValidUrl = ValidateUrlIsHttpOrHttpsRegEx(UrlValue);
 
                 /*
                  * Validate using Uri class.
                  */
-                if (IsValidUrl == false)
+                if (IsValidUrl is false)
                 {
                     bool InitialCheck = Uri.IsWellFormedUriString(UrlValue, UriKind.Absolute);
 
@@ -122,7 +122,7 @@ namespace gautier.rss.data
                     }
                 }
 
-                if (IsValidUrl == false)
+                if (IsValidUrl is false)
                 {
                     IsValidUrl = ValidateUrlIsHttpOrHttpsText(UrlValue);
                 }
@@ -131,7 +131,7 @@ namespace gautier.rss.data
             return IsValidUrl;
         }
 
-        public static bool ValidateUrlIsHttpOrHttpsText(string url)
+        public static bool ValidateUrlIsHttpOrHttpsText(in string url)
         {
             bool IsValidUrl = false;
 
@@ -149,7 +149,7 @@ namespace gautier.rss.data
 
                 int HostEndIndex = url.IndexOf("/", HostStartIndex, StringComparison.OrdinalIgnoreCase);
 
-                if (HostEndIndex == -1)
+                if (HostEndIndex is -1)
                 {
                     HostEndIndex = url.Length;
                 }
@@ -158,14 +158,14 @@ namespace gautier.rss.data
             }
 
             /*Host is valid, check the remainder of the url.*/
-            if (InitialCheck && string.IsNullOrEmpty(Host) == false)
+            if (InitialCheck && string.IsNullOrEmpty(Host) is false)
             {
-                List<char> ValidChars = new()
-                        {
-                            '.',//Dot
-                            '-',//Dash
-                            '_',//Underscore
-                        };
+                List<char> ValidChars =
+                [
+                    '.',//Dot
+                    '-',//Dash
+                    '_',//Underscore
+                ];
 
                 int ValidCharCount = 0;
 
@@ -183,7 +183,7 @@ namespace gautier.rss.data
             return IsValidUrl;
         }
 
-        public static bool ValidateUrlIsHttpOrHttpsRegEx(string url)
+        public static bool ValidateUrlIsHttpOrHttpsRegEx(in string url)
         {
             /*
              * Validate with Regular Expression.
@@ -191,18 +191,24 @@ namespace gautier.rss.data
             string ValidationPattern = @"^(https?://)[^\s/$.?#].[^\s]*$";
 
             bool IsValidUrl = Regex.IsMatch(url, ValidationPattern);
+
             return IsValidUrl;
         }
 
-        public static bool ValidateUrlIsHttpOrHttpsURI(string url)
+        public static bool ValidateUrlIsHttpOrHttpsURI(in string url)
         {
             bool IsUri = Uri.TryCreate(url, UriKind.Absolute, out Uri? UriValue);
 
             bool IsHttpOrHttps = false;
 
-            if (IsUri)
+            if (IsUri && UriValue is not null)
             {
-                IsHttpOrHttps = UriValue?.Scheme == Uri.UriSchemeHttp || UriValue?.Scheme == Uri.UriSchemeHttps;
+                IsHttpOrHttps = UriValue.Scheme switch
+                {
+                    string u when u == Uri.UriSchemeHttp => true,
+                    string u when u == Uri.UriSchemeHttps => true,
+                    _ => false,
+                };
             }
 
             return IsHttpOrHttps;

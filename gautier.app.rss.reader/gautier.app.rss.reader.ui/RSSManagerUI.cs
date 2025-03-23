@@ -250,18 +250,18 @@ namespace gautier.app.rss.reader.ui
             return;
         }
 
-        private bool CheckInput(BindableFeed feed)
+        private bool CheckInput(in BindableFeed feed)
         {
             int ErrorCount = 0;
 
             StringBuilder Errors = new();
 
-            Action<string> DispatchError = (string errorMessage) =>
+            void DispatchError(string errorMessage)
             {
                 Errors.AppendLine(errorMessage);
 
                 ErrorCount++;
-            };
+            }
 
             string FeedName = _FeedName.Text;
             string FeedUrl = _FeedUrl.Text;
@@ -279,16 +279,14 @@ namespace gautier.app.rss.reader.ui
             /*
              * Unique Name Validation.
              */
-            SortedList<string, int> Names = new();
+            SortedList<string, int> Names = [];
 
             foreach (BindableFeed FeedEntry in _Feeds)
             {
                 string EntryFeedName = FeedEntry.Name;
 
-                if (Names.ContainsKey(EntryFeedName))
+                if (Names.TryGetValue(EntryFeedName, out int RowCount))
                 {
-                    int RowCount = Names[EntryFeedName];
-
                     RowCount++;
 
                     Names[EntryFeedName] = RowCount;
@@ -316,10 +314,8 @@ namespace gautier.app.rss.reader.ui
             {
                 string EntryUrl = FeedEntry.Url;
 
-                if (Urls.ContainsKey(EntryUrl))
+                if (Urls.TryGetValue(EntryUrl, out int RowCount))
                 {
-                    int RowCount = Urls[EntryUrl];
-
                     RowCount++;
 
                     Urls[EntryUrl] = RowCount;
@@ -417,16 +413,11 @@ namespace gautier.app.rss.reader.ui
 
                 if (_FeedInputGrid.Children[ColumnIndex] is not Label)
                 {
-                    switch (ColumnIndex)
+                    ColDef.Width = ColumnIndex switch
                     {
-                        case 5:
-                        case 7:
-                            ColDef.Width = new(0.2, GridUnitType.Star);
-                            break;
-                        default:
-                            ColDef.Width = new(1, GridUnitType.Star);
-                            break;
-                    }
+                        5 or 7 => new(0.2, GridUnitType.Star),
+                        _ => new(1, GridUnitType.Star),
+                    };
                 }
 
                 _FeedInputGrid.ColumnDefinitions.Add(ColDef);
@@ -462,31 +453,25 @@ namespace gautier.app.rss.reader.ui
         private void LayoutFeedsGrid()
         {
             KeyValuePair<string, string>[] GridColumnNames =
-            {
-                new KeyValuePair<string, string>("Name", "Name"),
-                new KeyValuePair<string, string>("Url", "Url"),
-                new KeyValuePair < string, string >("Retrieve Limit (Hrs)", "RetrieveLimitHrs"),
-                new KeyValuePair < string, string >("Retention Days", "RetentionDays"),
-                new KeyValuePair < string, string >("Last Retrieved", "LastRetrieved")
-            };
+            [
+                new KeyValuePair <string, string>("Name", "Name"),
+                new KeyValuePair <string, string>("Url", "Url"),
+                new KeyValuePair <string, string>("Retrieve Limit (Hrs)", "RetrieveLimitHrs"),
+                new KeyValuePair <string, string>("Retention Days", "RetentionDays"),
+                new KeyValuePair <string, string>("Last Retrieved", "LastRetrieved")
+            ];
 
             for (int ColI = 0; ColI < GridColumnNames.Length; ColI++)
             {
-                DataGridColumn Col;
-
                 KeyValuePair<string, string> ColumnNamePair = GridColumnNames[ColI];
 
-                DataGridLength ColumnWidth = new(1, DataGridLengthUnitType.Star);
-
-                switch (ColI)
+                DataGridLength ColumnWidth = ColI switch
                 {
-                    case 2:
-                    case 3:
-                        ColumnWidth = new DataGridLength(1, DataGridLengthUnitType.SizeToHeader);
-                        break;
-                }
+                    2 or 3 => new(1, DataGridLengthUnitType.SizeToHeader),
+                    _ => new(1, DataGridLengthUnitType.Star),
+                };
 
-                Col = new DataGridTextColumn()
+                DataGridColumn Col = new DataGridTextColumn()
                 {
                     Header = ColumnNamePair.Key,
                     Binding = new Binding(ColumnNamePair.Value),
@@ -535,11 +520,11 @@ namespace gautier.app.rss.reader.ui
         private void LayoutFeedUI()
         {
             UIElement[] Els =
-            {
+            [
                 _FeedInputGrid,
                 _FeedsGrid,
                 _FeedOptionsPanel
-            };
+            ];
 
             foreach (UIElement El in Els)
             {

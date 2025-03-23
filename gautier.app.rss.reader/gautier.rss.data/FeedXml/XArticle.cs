@@ -27,7 +27,7 @@
         public string ContentEncoded { get; set; } = string.Empty;
         public string iTunesSummary { get; set; } = string.Empty;
 
-        public List<string> Labels { get; set; } = new();
+        public List<string> Labels { get; set; } = [];
 
         public DateTime PublicationDateTimeStamp { get; set; } = DateTime.UtcNow;
         public string Creator { get; set; } = string.Empty;

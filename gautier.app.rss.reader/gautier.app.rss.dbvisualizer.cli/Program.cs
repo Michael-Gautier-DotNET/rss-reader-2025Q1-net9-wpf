@@ -13,7 +13,7 @@ namespace gautier.app.rss.dbvisualizer.cli
 
             SortedList<string, Feed> RSSFeeds = FeedDataExchange.GetAllFeeds(SQLiteDbConnectionString);
 
-            List<string> RSSFeedNames = new(RSSFeeds.Keys);
+            List<string> RSSFeedNames = [.. RSSFeeds.Keys];
 
             foreach(string FeedName in RSSFeedNames)
             {
@@ -28,7 +28,7 @@ namespace gautier.app.rss.dbvisualizer.cli
 
                 SortedList<string, FeedArticle> Articles = FeedDataExchange.GetFeedArticles(SQLiteDbConnectionString, FeedName);
 
-                List<string> ArticleUrls = new(Articles.Keys);
+                List<string> ArticleUrls = [.. Articles.Keys];
 
                 foreach(string ArticleUrl in ArticleUrls)
                 {

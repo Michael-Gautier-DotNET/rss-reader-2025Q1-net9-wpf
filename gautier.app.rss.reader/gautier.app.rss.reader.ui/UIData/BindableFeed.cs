@@ -65,9 +65,9 @@ namespace gautier.app.rss.reader.ui.UIData
             set => SetValue(RetentionDaysProperty, value);
         }
 
-        internal static ObservableCollection<BindableFeed> ConvertFeeds(SortedList<string, Feed> feeds)
+        internal static ObservableCollection<BindableFeed> ConvertFeeds(in SortedList<string, Feed> feeds)
         {
-            ObservableCollection<BindableFeed> BFeeds = new();
+            ObservableCollection<BindableFeed> BFeeds = [];
 
             foreach (Feed FeedEntry in feeds.Values)
             {
@@ -79,9 +79,9 @@ namespace gautier.app.rss.reader.ui.UIData
             return BFeeds;
         }
 
-        internal static List<Feed> ConvertFeeds(ObservableCollection<BindableFeed> feeds)
+        internal static List<Feed> ConvertFeeds(in ObservableCollection<BindableFeed> feeds)
         {
-            List<Feed> DFeeds = new();
+            List<Feed> DFeeds = [];
 
             foreach (BindableFeed BFeed in feeds)
             {
@@ -93,7 +93,7 @@ namespace gautier.app.rss.reader.ui.UIData
             return DFeeds;
         }
 
-        internal static Feed ConvertFeed(BindableFeed feed)
+        internal static Feed ConvertFeed(in BindableFeed feed)
         {
             return new()
             {
@@ -106,7 +106,7 @@ namespace gautier.app.rss.reader.ui.UIData
             };
         }
 
-        internal static BindableFeed ConvertFeed(Feed feed)
+        internal static BindableFeed ConvertFeed(in Feed feed)
         {
             return new()
             {
@@ -121,7 +121,7 @@ namespace gautier.app.rss.reader.ui.UIData
             };
         }
 
-        internal static BindableFeed ConvertFeedNarrow(Feed feed)
+        internal static BindableFeed ConvertFeedNarrow(in Feed feed)
         {
             return new()
             {
