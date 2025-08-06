@@ -11,9 +11,9 @@ public static class FeedDataExchange
 
     private static readonly DateTimeFormatInfo _InvariantFormat = DateTimeFormatInfo.InvariantInfo;
 
-    public static SortedList<string, Feed> GetAllFeeds(in string sqlConnectionString)
+    public static SortedList<string, Feed> GetAllFeeds(string sqlConnectionString)
     {
-        SortedList<string, Feed> Feeds = [];
+        SortedList<string, Feed> Feeds = new();
 
         using (SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(sqlConnectionString))
         {
@@ -28,7 +28,7 @@ public static class FeedDataExchange
         return Feeds;
     }
 
-    public static SortedList<string, SortedList<string, FeedArticle>> GetAllFeedArticles(in string sqlConnectionString)
+    public static SortedList<string, SortedList<string, FeedArticle>> GetAllFeedArticles(string sqlConnectionString)
     {
         SortedList<string, SortedList<string, FeedArticle>> Articles = new(100);
 
@@ -40,7 +40,7 @@ public static class FeedDataExchange
             {
                 string FeedName = ArticleEntry.FeedName;
 
-                if (Articles.ContainsKey(FeedName) is false)
+                if (Articles.ContainsKey(FeedName) == false)
                 {
                     Articles[FeedName] = new(1000);
                 }
@@ -51,7 +51,7 @@ public static class FeedDataExchange
 
                     SortedList<string, FeedArticle> ArticlesByUrl = Articles[FeedName];
 
-                    if (ArticlesByUrl.ContainsKey(ArticleUrl) is false)
+                    if (ArticlesByUrl.ContainsKey(ArticleUrl) == false)
                     {
                         ArticlesByUrl.Add(ArticleUrl, ArticleEntry);
                     }
@@ -62,7 +62,7 @@ public static class FeedDataExchange
         return Articles;
     }
 
-    public static SortedList<string, FeedArticle> GetFeedArticles(in string sqlConnectionString, in string feedName)
+    public static SortedList<string, FeedArticle> GetFeedArticles(string sqlConnectionString, string feedName)
     {
         SortedList<string, FeedArticle> Articles = new(100);
 
@@ -74,7 +74,7 @@ public static class FeedDataExchange
             {
                 string ArticleUrl = ArticleEntry.ArticleUrl;
 
-                if (Articles.ContainsKey(ArticleUrl) is false)
+                if (Articles.ContainsKey(ArticleUrl) == false)
                 {
                     Articles.Add(ArticleUrl, ArticleEntry);
                 }
@@ -84,9 +84,9 @@ public static class FeedDataExchange
         return Articles;
     }
 
-    public static void ImportStaticFeedFilesToDatabase(in string feedSaveDirectoryPath, in string feedDbFilePath, in Feed[] feeds)
+    public static void ImportStaticFeedFilesToDatabase(string feedSaveDirectoryPath, string feedDbFilePath, Feed[] feeds)
     {
-        SortedList<string, List<FeedArticleUnion>> FeedsArticles = [];
+        SortedList<string, List<FeedArticleUnion>> FeedsArticles = new();
 
         foreach (Feed FeedEntry in feeds)
         {
@@ -100,9 +100,9 @@ public static class FeedDataExchange
         return;
     }
 
-    public static List<FeedArticleUnion> ImportRSSFeedToDatabase(in string feedSaveDirectoryPath, in string feedDbFilePath, in Feed feed)
+    public static List<FeedArticleUnion> ImportRSSFeedToDatabase(string feedSaveDirectoryPath, string feedDbFilePath, Feed feed)
     {
-        List<FeedArticleUnion> Articles = [];
+        List<FeedArticleUnion> Articles = new();
 
         DateTime ModificationDateTime = DateTime.Now;
         string ModificationDateTimeText = ModificationDateTime.ToString(_InvariantFormat.UniversalSortableDateTimePattern);
@@ -123,16 +123,16 @@ public static class FeedDataExchange
             FeedArticleUnion FeedArticlePair = new();
 
             bool InText = false;
-            List<string> LineHeaders = 
-            [
+            List<string> LineHeaders = new()
+            {
                 "URL",
                 "DATE",
                 "HEAD",
                 "TEXT",
                 "SUM",
-            ];
+            };
 
-            while (LineReader.EndOfStream is false && (FileLine = LineReader.ReadLine() ?? string.Empty) is not null)
+            while (LineReader.EndOfStream == false && (FileLine = LineReader.ReadLine() ?? string.Empty) is not null)
             {
                 if (string.IsNullOrWhiteSpace(FileLine))
                 {
@@ -145,7 +145,7 @@ public static class FeedDataExchange
                 if (FileLine.Contains(_Tab))
                 {
                     Col1 = FileLine.Substring(0, FileLine.IndexOf(_Tab));
-                    Col2 = FileLine[(FileLine.IndexOf(_Tab) + 1)..];
+                    Col2 = FileLine.Substring(FileLine.IndexOf(_Tab) + 1);
                 }
 
                 if (LineHeaders.Contains(Col1))
@@ -153,24 +153,24 @@ public static class FeedDataExchange
                     InText = false;
                 }
 
-                if (Col1 is "SUM")
+                if (Col1 == "SUM")
                 {
                     FeedArticlePair.ArticleDetail.ArticleSummary = Col2;
                 }
 
-                if (Col1 is "TEXT")
+                if (Col1 == "TEXT")
                 {
                     InText = true;
 
                     FeedArticlePair.ArticleDetail.ArticleText = Col2;
                 }
 
-                if (LineHeaders.Contains(Col1) is false && InText)
+                if (LineHeaders.Contains(Col1) == false && InText)
                 {
                     FeedArticlePair.ArticleDetail.ArticleText += FileLine;
                 }
 
-                if (Col1 is "URL" && PreviousURL != Col2)
+                if (Col1 == "URL" && PreviousURL != Col2)
                 {
                     FeedArticlePair = new FeedArticleUnion
                     {
@@ -188,17 +188,17 @@ public static class FeedDataExchange
                     PreviousURL = Col2;
                 }
 
-                if (Col1 is "URL")
+                if (Col1 == "URL")
                 {
                     FeedArticlePair.ArticleDetail.ArticleUrl = Col2;
                 }
 
-                if (Col1 is "DATE")
+                if (Col1 == "DATE")
                 {
                     FeedArticlePair.ArticleDetail.ArticleDate = Col2;
                 }
 
-                if (Col1 is "HEAD")
+                if (Col1 == "HEAD")
                 {
                     FeedArticlePair.ArticleDetail.HeadlineText = Col2;
                 }
@@ -232,12 +232,12 @@ public static class FeedDataExchange
         return Articles;
     }
 
-    private static string GetNormalizedFeedFilePath(in string feedSaveDirectoryPath, in Feed feedInfo)
+    private static string GetNormalizedFeedFilePath(string feedSaveDirectoryPath, Feed feedInfo)
     {
         return Path.Combine(feedSaveDirectoryPath, $"{feedInfo.FeedName}.txt");
     }
 
-    public static void WriteRSSArticlesToDatabase(in string feedDbFilePath, in SortedList<string, List<FeedArticleUnion>> feedsArticles)
+    public static void WriteRSSArticlesToDatabase(string feedDbFilePath, SortedList<string, List<FeedArticleUnion>> feedsArticles)
     {
         string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
 
@@ -253,13 +253,13 @@ public static class FeedDataExchange
         return;
     }
 
-    private static SortedList<string, Feed> CollectFeeds(in SortedList<string, List<FeedArticleUnion>> feedsArticles, in IList<string> feedNames)
+    private static SortedList<string, Feed> CollectFeeds(SortedList<string, List<FeedArticleUnion>> feedsArticles, IList<string> feedNames)
     {
-        SortedList<string, Feed> Feeds = [];
+        SortedList<string, Feed> Feeds = new();
 
         foreach (var FeedName in feedNames)
         {
-            if (Feeds.ContainsKey(FeedName) is false)
+            if (Feeds.ContainsKey(FeedName) == false)
             {
                 var FUL = feedsArticles[FeedName];
 
@@ -275,7 +275,7 @@ public static class FeedDataExchange
         return Feeds;
     }
 
-    private static void UpdateRSSTables(in SortedList<string, List<FeedArticleUnion>> feedsArticles, in SQLiteConnection sqlConn, in IList<string> feedNames, in SortedList<string, Feed> feeds)
+    private static void UpdateRSSTables(SortedList<string, List<FeedArticleUnion>> feedsArticles, SQLiteConnection sqlConn, IList<string> feedNames, SortedList<string, Feed> feeds)
     {
         foreach (var FeedName in feedNames)
         {
@@ -296,11 +296,11 @@ public static class FeedDataExchange
         return;
     }
 
-    private static void ModifyFeedArticle(in SQLiteConnection sqlConn, in Feed feedHeader, in FeedArticleUnion article)
+    private static void ModifyFeedArticle(SQLiteConnection sqlConn, Feed feedHeader, FeedArticleUnion article)
     {
-        bool Exists = FeedArticleReader.Exists(sqlConn, feedHeader.FeedName, article.ArticleDetail.ArticleUrl);
+        bool Exists = FeedArticleReader.HeadlineExists(sqlConn, feedHeader.FeedName, article.ArticleDetail.HeadlineText);
 
-        if (Exists is false)
+        if (Exists == false)
         {
             FeedArticleWriter.AddFeedArticle(sqlConn, article);
         }
@@ -322,7 +322,7 @@ public static class FeedDataExchange
             FeedReader.Exists(sqlConn, Id) :
             FeedReader.Exists(sqlConn, feedHeader.FeedName);
 
-        if (Exists is false)
+        if (Exists == false)
         {
             FeedWriter.AddFeed(sqlConn, feedHeader);
         }
@@ -351,15 +351,15 @@ public static class FeedDataExchange
         return;
     }
 
-    public static Feed[] MergeFeedEntries(in string feedDbFilePath, in Feed[] feedEntries)
+    public static Feed[] MergeFeedEntries(string feedDbFilePath, Feed[] feedEntries)
     {
         string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
 
         using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(ConnectionString);
 
-        List<string> FeedUrls = [];
+        List<string> FeedUrls = new();
 
-        List<Feed> StaticFeedEntries = [.. feedEntries];
+        List<Feed> StaticFeedEntries = new(feedEntries);
         List<Feed> FeedEntries = FeedReader.GetAllRows(SQLConn);
 
         if (FeedEntries.Count > 0)
@@ -378,7 +378,7 @@ public static class FeedDataExchange
         return FeedEntries.ToArray();
     }
 
-    private static void MergeValidateFeedEntries(in List<Feed> leftSideValues, in List<Feed> rightSideValues, in List<string> secondKeys)
+    private static void MergeValidateFeedEntries(List<Feed> leftSideValues, List<Feed> rightSideValues, List<string> secondKeys)
     {
         foreach (Feed LeftEntry in leftSideValues)
         {
@@ -400,7 +400,7 @@ public static class FeedDataExchange
                 {
                     string RightSideSecondKey = RightSideEntry.FeedUrl.ToLower();
 
-                    if (SecondKey != RightSideSecondKey && secondKeys.Contains(RightSideSecondKey) is false)
+                    if (SecondKey != RightSideSecondKey && secondKeys.Contains(RightSideSecondKey) == false)
                     {
                         /*
                          * Give another feed the opportunity to use the url under a different feed name.
@@ -424,7 +424,7 @@ public static class FeedDataExchange
         return;
     }
 
-    public static Feed UpdateFeedConfigurationInDatabase(in string feedDbFilePath, in Feed feed)
+    public static Feed UpdateFeedConfigurationInDatabase(string feedDbFilePath, Feed feed)
     {
         string ConnectionString = SQLUtil.GetSQLiteConnectionString(feedDbFilePath, 3);
 
@@ -437,7 +437,7 @@ public static class FeedDataExchange
         return FeedEntry;
     }
 
-    public static bool RemoveFeedFromDatabase(in string feedDbFilePath, int feedDbId)
+    public static bool RemoveFeedFromDatabase(string feedDbFilePath, int feedDbId)
     {
         bool IsDeleted = false;
 
@@ -458,13 +458,13 @@ public static class FeedDataExchange
 
             Exists = FeedReader.Exists(SQLConn, feedDbId);
 
-            IsDeleted = Exists is false;
+            IsDeleted = Exists == false;
         }
 
         return IsDeleted;
     }
 
-    public static void RemoveExpiredArticlesFromDatabase(in string sqlConnectionString)
+    public static void RemoveExpiredArticlesFromDatabase(string sqlConnectionString)
     {
         using SQLiteConnection SQLConn = SQLUtil.OpenSQLiteConnection(sqlConnectionString);
 

@@ -50,7 +50,7 @@ namespace gautier.rss.data.RSSDb
             return Count;
         }
 
-        public static int CountRows(SQLiteConnection sqlConn, string feedName, string articleUrl)
+        public static int CountRowsByFeedNameAndArticleUrl(SQLiteConnection sqlConn, string feedName, string articleUrl)
         {
             int Count = 0;
 
@@ -67,6 +67,24 @@ namespace gautier.rss.data.RSSDb
             return Count;
         }
 
+        public static int CountRowsByFeedNameAndHeadlineText(SQLiteConnection sqlConn, string feedName, string headlineText)
+        {
+            int Count = 0;
+
+            string CommandText = $"SELECT COUNT(*) FROM {_TableName} WHERE feed_name = @FeedName AND headline_text = @HeadLineText;";
+
+            using (SQLiteCommand SQLCmd = new(CommandText, sqlConn))
+            {
+                SQLCmd.Parameters.AddWithValue("@FeedName", feedName);
+                SQLCmd.Parameters.AddWithValue("@HeadLineText", headlineText);
+
+                Count = Convert.ToInt32(SQLCmd.ExecuteScalar());
+            }
+
+            return Count;
+        }
+
+
         public static bool Exists(SQLiteConnection sqlConn, string feedName)
         {
             int Count = CountRows(sqlConn, feedName);
@@ -76,7 +94,14 @@ namespace gautier.rss.data.RSSDb
 
         public static bool Exists(SQLiteConnection sqlConn, string feedName, string articleUrl)
         {
-            int Count = CountRows(sqlConn, feedName, articleUrl);
+            int Count = CountRowsByFeedNameAndArticleUrl(sqlConn, feedName, articleUrl);
+
+            return Count > 0;
+        }
+
+        public static bool HeadlineExists(SQLiteConnection sqlConn, string feedName, string headlineText)
+        {
+            int Count = CountRowsByFeedNameAndHeadlineText(sqlConn, feedName, headlineText);
 
             return Count > 0;
         }
